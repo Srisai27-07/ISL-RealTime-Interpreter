@@ -1,0 +1,55 @@
+# ==========================================
+# Real-Time Indian Sign Language (ISL) Configuration
+# ==========================================
+
+camera:
+  device_index: 0
+  width: 640
+  height: 480
+  fps: 30
+
+vision:
+  # MediaPipe settings
+  min_detection_confidence: 0.7
+  min_tracking_confidence: 0.6
+  use_holistic: true           # true = Holistic (Hands + Pose), false = Hands only
+  # Landmark feature lengths:
+  # Left Hand: 21 * 3 = 63
+  # Right Hand: 21 * 3 = 63
+  # Total hand landmarks = 126
+  feature_dim: 126
+
+sequence:
+  sequence_length: 30          # Number of consecutive frames per temporal gesture (~1 second @ 30fps)
+  prediction_threshold: 0.80   # Minimum model probability to trigger a sign
+  debounce_frames: 10          # Frames required of consistent prediction before committing
+  cooldown_seconds: 1.5        # Time to wait before repeating the same sign
+
+classes:
+  # Priority Hackathon Vocabulary (Essential signs for demo)
+  - "Hello"
+  - "Thank You"
+  - "Please"
+  - "Yes"
+  - "No"
+  - "Help"
+  - "Good Morning"
+  - "I Love You"
+  - "Water"
+  - "Food"
+
+model:
+  type: "BiLSTM"               # Options: BiLSTM, GRU, Conv1D_LSTM
+  input_size: 126              # 63 (Left Hand) + 63 (Right Hand)
+  hidden_size: 128
+  num_layers: 2
+  dropout: 0.3
+  batch_size: 16
+  learning_rate: 0.001
+  epochs: 50
+  weights_path: "models/checkpoints/isl_bilstm.pt"
+
+tts:
+  enabled: true
+  rate: 160
+  volume: 0.9

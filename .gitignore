@@ -1,0 +1,63 @@
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Environments
+.venv/
+venv/
+ENV/
+env/
+*.env
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Datasets (large media files should not be committed to Git)
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+*.zip
+*.tar.gz
+*.tar
+*.rar
+
+# Model checkpoints & weights (store on HuggingFace / Google Drive or generate during build)
+models/checkpoints/*
+!models/checkpoints/.gitkeep
+*.pt
+*.pth
+*.h5
+*.hdf5
+*.onnx
+*.tflite
+*.pkl
+
+# Logs & profiling
+logs/
+*.log
+runs/
+wandb/
+.tensorboard/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/

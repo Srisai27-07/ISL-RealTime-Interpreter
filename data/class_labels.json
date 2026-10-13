@@ -1,0 +1,25 @@
+{
+  "classes": [
+    "Hello",
+    "Thank You",
+    "Please",
+    "Yes",
+    "No",
+    "Help",
+    "Good Morning",
+    "I Love You",
+    "Water",
+    "Food"
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "language": "Indian Sign Language (ISL)",
+    "taxonomy": {
+      "greetings": ["Hello", "Good Morning"],
+      "politeness": ["Thank You", "Please"],
+      "responses": ["Yes", "No"],
+      "needs_and_emergency": ["Help", "Water", "Food"],
+      "common_expressions": ["I Love You"]
+    }
+  }
+}
