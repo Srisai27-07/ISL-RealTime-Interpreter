@@ -391,26 +391,71 @@
       <!-- Right Column: Sentence Builder, Audio TTS, and Controls (4 cols) -->
       <div class="lg:col-span-4 flex flex-col gap-6">
         
-        <!-- Sentence Transcription Tray -->
-        <div class="glass-card rounded-3xl p-6 flex flex-col justify-between border border-slate-800">
+        <!-- Sentence Transcription & NLP Grammar Polisher Tray -->
+        <div class="glass-card rounded-3xl p-6 flex flex-col justify-between border border-slate-800 gap-4">
           <div>
-            <div class="flex items-center justify-between text-xs text-slate-400 uppercase font-semibold mb-3">
-              <span>📝 Live Sentence Tray</span>
-              <span class="text-[10px] text-emerald-400">Auto-Saving to SQLite</span>
+            <!-- Header with Auto-Polish toggle -->
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+              <span class="font-bold text-white flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+                <span>💬 ISL Grammar Assembler</span>
+              </span>
+              <label class="flex items-center gap-1.5 cursor-pointer text-[11px] text-cyan-300 font-medium select-none">
+                <input id="autoPolishToggle" type="checkbox" checked class="accent-cyan-400 rounded cursor-pointer w-3.5 h-3.5">
+                <span>Auto-Correct</span>
+              </label>
             </div>
-            <div id="sentenceDisplay" class="text-xl font-bold text-white min-h-[80px] p-3 rounded-2xl bg-black/40 border border-slate-800 leading-relaxed">
-              [Perform signs to assemble sentence...]
+
+            <!-- Raw Captured Signs Tray (Token Chips) -->
+            <div class="mb-3">
+              <div class="flex justify-between text-[10px] uppercase font-bold text-slate-400 mb-1">
+                <span>Raw Captured Signs</span>
+                <span id="tokenCountBadge" class="text-slate-400">0 signs</span>
+              </div>
+              <div id="rawTokensDisplay" class="flex flex-wrap gap-1.5 min-h-[36px] max-h-[80px] overflow-y-auto p-2 rounded-xl bg-slate-950/80 border border-slate-800/80 text-xs text-slate-400 items-center">
+                <span class="text-slate-600 italic text-[11px]">No signs captured yet...</span>
+              </div>
+            </div>
+
+            <!-- Polished Natural English Display -->
+            <div>
+              <div class="flex justify-between text-[10px] uppercase font-bold mb-1.5">
+                <span class="text-emerald-400 flex items-center gap-1">
+                  <span>✨ Polished Natural English</span>
+                </span>
+                <span id="polishStatusBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+                  Ready
+                </span>
+              </div>
+              <div id="sentenceDisplay" class="text-lg font-bold text-white min-h-[72px] p-3 rounded-2xl bg-gradient-to-br from-black/60 to-slate-900/60 border border-cyan-800/40 leading-relaxed flex items-center shadow-inner">
+                [Perform signs to assemble sentence...]
+              </div>
             </div>
           </div>
 
-          <div class="flex items-center gap-3 mt-6">
-            <button id="speakBtn" class="flex-1 cta-button py-3 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
-              <span>Speak Aloud</span>
-            </button>
-            <button id="clearBtn" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">
-              Clear
-            </button>
+          <!-- Controls Toolbar: Space, Undo, Polish, Speak, Clear -->
+          <div class="flex flex-col gap-2 mt-2 pt-2 border-t border-slate-800/60">
+            <div class="flex items-center gap-2">
+              <button id="spaceBtn" title="Insert a space / word break" class="flex-1 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 border border-slate-700/60 shadow-sm active:scale-95">
+                <span>␣ Space</span>
+              </button>
+              <button id="undoBtn" title="Remove the last sign" class="flex-1 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 border border-slate-700/60 shadow-sm active:scale-95">
+                <span>⌫ Undo</span>
+              </button>
+              <button id="polishBtn" title="Force AI grammar polish" class="flex-1 px-3 py-2 bg-cyan-950/70 hover:bg-cyan-900/70 text-cyan-300 border border-cyan-700/60 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95">
+                <span id="polishBtnIcon">✨</span>
+                <span>Polish</span>
+              </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button id="speakBtn" class="flex-1 cta-button py-2.5 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-2 shadow-lg active:scale-95">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+                <span>Speak English</span>
+              </button>
+              <button id="clearBtn" class="px-4 py-2.5 bg-rose-950/40 hover:bg-rose-900/50 text-rose-300 border border-rose-800/40 rounded-xl text-xs font-semibold transition-all active:scale-95">
+                Clear
+              </button>
+            </div>
           </div>
         </div>
 
@@ -876,6 +921,113 @@
     // Tracks latest live prediction received from backend
     let latestLivePrediction = { sign: "", confidence: 0 };
 
+    // Debounce timer for auto-polishing
+    let polishDebounceTimer = null;
+    let latestPolishedSentence = "";
+
+    // Renders visual badges for each captured sign in the raw token tray
+    function renderRawTokens() {
+      const container = document.getElementById("rawTokensDisplay");
+      const badge = document.getElementById("tokenCountBadge");
+      if (!container) return;
+
+      badge.innerText = `${accumulatedSentence.length} sign${accumulatedSentence.length === 1 ? '' : 's'}`;
+
+      if (accumulatedSentence.length === 0) {
+        container.innerHTML = `<span class="text-slate-600 italic text-[11px]">No signs captured yet...</span>`;
+        return;
+      }
+
+      container.innerHTML = "";
+      accumulatedSentence.forEach((token, idx) => {
+        const chip = document.createElement("span");
+        if (token === " " || token === "_") {
+          chip.className = "px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono text-[10px] border border-slate-700 select-none";
+          chip.innerText = "␣";
+          chip.title = "Word break";
+        } else if (token.length === 1) {
+          // Alphabet letter
+          chip.className = "px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-300 font-bold border border-cyan-700/60 font-mono text-xs shadow-sm";
+          chip.innerText = token;
+        } else {
+          // Word-level gesture
+          chip.className = "px-2.5 py-0.5 rounded bg-emerald-950/80 text-emerald-300 font-semibold border border-emerald-700/60 text-xs shadow-sm";
+          chip.innerText = token;
+        }
+        container.appendChild(chip);
+      });
+      // Scroll to newest token
+      container.scrollLeft = container.scrollWidth;
+    }
+
+    // Sends raw sign tokens to the backend NLP engine for grammar correction
+    async function polishSentence(force = false) {
+      if (accumulatedSentence.length === 0) {
+        document.getElementById("sentenceDisplay").innerText = "[Perform signs to assemble sentence...]";
+        document.getElementById("polishStatusBadge").innerText = "Ready";
+        document.getElementById("polishStatusBadge").className = "text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono";
+        return;
+      }
+
+      const statusBadge = document.getElementById("polishStatusBadge");
+      const polishBtnIcon = document.getElementById("polishBtnIcon");
+      if (statusBadge) statusBadge.innerText = "Polishing...";
+      if (polishBtnIcon) polishBtnIcon.className = "inline-block animate-spin";
+
+      try {
+        const res = await fetch(`${API_BASE}/api/polish-sentence`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tokens: accumulatedSentence })
+        });
+        const data = await res.json();
+        const display = document.getElementById("sentenceDisplay");
+
+        latestPolishedSentence = data.polished_sentence || accumulatedSentence.join(" ");
+        display.innerText = latestPolishedSentence;
+
+        if (statusBadge) {
+          if (data.source === "llm") {
+            statusBadge.innerText = "✨ AI Polished";
+            statusBadge.className = "text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-semibold";
+          } else {
+            statusBadge.innerText = "✓ NLP Corrected";
+            statusBadge.className = "text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold";
+          }
+        }
+
+        // Auto-save polished sentence to SQLite history
+        fetch(`${API_BASE}/api/history`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: currentUser.id,
+            sentence: latestPolishedSentence,
+            mode: currentMode,
+            confidence: latestLivePrediction.confidence || 0.95
+          })
+        }).then(() => loadHistory());
+
+      } catch (err) {
+        console.error("Sentence polish error:", err);
+        if (statusBadge) statusBadge.innerText = "Raw Assembled";
+        document.getElementById("sentenceDisplay").innerText = accumulatedSentence.join(" ");
+      } finally {
+        if (polishBtnIcon) polishBtnIcon.className = "";
+      }
+    }
+
+    // Debounced trigger for auto-polish
+    function triggerAutoPolish(delay = 650) {
+      const toggle = document.getElementById("autoPolishToggle");
+      if (toggle && !toggle.checked) {
+        document.getElementById("sentenceDisplay").innerText = accumulatedSentence.join(" ");
+        return;
+      }
+      clearTimeout(polishDebounceTimer);
+      polishDebounceTimer = setTimeout(() => polishSentence(), delay);
+    }
+
     // Commits a confirmed sign to the sentence construction buffer
     function commitCurrentSign(sign, confidence) {
       const now = Date.now();
@@ -883,13 +1035,14 @@
       if (sign === lastCommittedSign && (now - lastCommitTime) < 1800) return;
 
       accumulatedSentence.push(sign);
-      const text = accumulatedSentence.join(" ");
-      const display = document.getElementById("sentenceDisplay");
-      display.innerText = text;
       lastCommittedSign = sign;
       lastCommitTime = now;
 
+      // Update raw tokens display
+      renderRawTokens();
+
       // Visual pulse animation on sentence display
+      const display = document.getElementById("sentenceDisplay");
       display.style.transition = "transform 0.15s ease, border-color 0.15s ease";
       display.style.transform = "scale(1.02)";
       display.style.borderColor = "#00FF99";
@@ -898,12 +1051,8 @@
         display.style.borderColor = "";
       }, 250);
 
-      // Auto-save sentence to SQLite
-      fetch(`${API_BASE}/api/history`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: currentUser.id, sentence: text, mode: currentMode, confidence })
-      }).then(() => loadHistory());
+      // Trigger NLP grammar polisher
+      triggerAutoPolish(650);
     }
 
     function handlePrediction(data) {
@@ -1098,6 +1247,7 @@
     // -------------------------------------------------------------------------
     // PART E: SPEECH SYNTHESIS & HISTORY CONTROLS
     // -------------------------------------------------------------------------
+    // Speech Synthesis: Reads the polished natural English aloud
     document.getElementById("speakBtn").addEventListener("click", () => {
       const text = document.getElementById("sentenceDisplay").innerText;
       if (text && !text.includes("[")) {
@@ -1107,10 +1257,56 @@
       }
     });
 
+    // Space button: Appends a word boundary token
+    document.getElementById("spaceBtn").addEventListener("click", () => {
+      if (accumulatedSentence.length > 0 && accumulatedSentence[accumulatedSentence.length - 1] !== " ") {
+        accumulatedSentence.push(" ");
+        renderRawTokens();
+        triggerAutoPolish(300);
+      }
+    });
+
+    // Undo button: Removes the last committed sign
+    document.getElementById("undoBtn").addEventListener("click", () => {
+      if (accumulatedSentence.length > 0) {
+        accumulatedSentence.pop();
+        lastCommittedSign = null;
+        renderRawTokens();
+        if (accumulatedSentence.length === 0) {
+          document.getElementById("sentenceDisplay").innerText = "[Perform signs to assemble sentence...]";
+          document.getElementById("polishStatusBadge").innerText = "Ready";
+          document.getElementById("polishStatusBadge").className = "text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono";
+        } else {
+          triggerAutoPolish(300);
+        }
+      }
+    });
+
+    // Force Polish button: Instantly sends to backend NLP engine
+    document.getElementById("polishBtn").addEventListener("click", () => {
+      polishSentence(true);
+    });
+
+    // Auto-Polish toggle switch listener
+    document.getElementById("autoPolishToggle").addEventListener("change", (e) => {
+      if (e.target.checked) {
+        triggerAutoPolish(100);
+      } else {
+        document.getElementById("sentenceDisplay").innerText = accumulatedSentence.join(" ");
+        document.getElementById("polishStatusBadge").innerText = "Raw Tokens";
+        document.getElementById("polishStatusBadge").className = "text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 font-mono";
+      }
+    });
+
+    // Clear button: Resets all buffers, displays, and states
     document.getElementById("clearBtn").addEventListener("click", () => {
       accumulatedSentence = [];
       lastCommittedSign = null;
+      latestPolishedSentence = "";
+      renderRawTokens();
       document.getElementById("sentenceDisplay").innerText = "[Perform signs to assemble sentence...]";
+      document.getElementById("polishStatusBadge").innerText = "Ready";
+      document.getElementById("polishStatusBadge").className = "text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono";
     });
 
     // History Drawer

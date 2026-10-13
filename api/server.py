@@ -14,9 +14,14 @@ import numpy as np
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from src.utils.nlp_grammar import polisher
 
 # Add project root to path
 sys.path.append(".")
+
+class PolishSentenceRequest(BaseModel):
+    tokens: Optional[List[str]] = None
+    sentence: Optional[str] = None
 
 app = FastAPI(
     title="Vaani-ISL Real-Time API",
@@ -96,6 +101,11 @@ def init_db():
                 confidence REAL
             )
         """)
+        # Ensure user_id column exists if table was previously created without it
+        cursor = conn.execute("PRAGMA table_info(history)")
+        columns = [row[1] for row in cursor.fetchall()]
+        if "user_id" not in columns:
+            conn.execute("ALTER TABLE history ADD COLUMN user_id INTEGER DEFAULT 1")
         cursor = conn.execute("SELECT id FROM users WHERE email = 'demo@hackathon.com'")
         if not cursor.fetchone():
             demo_hash = hash_password("demo123")
@@ -360,6 +370,13 @@ def clear_history(user_id: int = 1):
         conn.execute("DELETE FROM history WHERE user_id = ?", (user_id,))
         conn.commit()
     return {"status": "cleared"}
+
+# 8b. NLP Grammar & Auto-Correction Endpoint
+@app.post("/api/polish-sentence")
+def polish_sentence_endpoint(payload: PolishSentenceRequest):
+    input_data = payload.tokens if payload.tokens is not None else (payload.sentence or "")
+    result = polisher.polish(input_data)
+    return result
 
 # 9. Real-Time WebSocket with Injected Telemetry
 @app.websocket("/ws/stream")
