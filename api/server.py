@@ -411,6 +411,8 @@ async def websocket_stream(websocket: WebSocket):
 
     except WebSocketDisconnect:
         print("[WS] Frontend client disconnected.")
+    except Exception as e:
+        print(f"[WS Error] Unexpected exception: {e}")
 
 # 10. Static Asset Mounting & Single-Page Application Route
 from fastapi.staticfiles import StaticFiles

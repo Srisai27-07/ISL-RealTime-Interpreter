@@ -337,6 +337,24 @@
           <div class="relative w-full aspect-video bg-black">
             <video id="webcam" class="w-full h-full object-cover transform -scale-x-100" playsinline autoplay muted></video>
             <canvas id="pipCanvas" class="absolute inset-0 w-full h-full object-cover transform -scale-x-100 pointer-events-none"></canvas>
+            <!-- Stability Ring Overlay -->
+            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5 pointer-events-none">
+              <svg id="stabilityRingSvg" width="44" height="44" viewBox="0 0 44 44">
+                <!-- Background ring -->
+                <circle cx="22" cy="22" r="18" stroke="rgba(255,255,255,0.1)" stroke-width="3.5" fill="none"/>
+                <!-- Animated progress ring (stroke-dashoffset controlled by JS) -->
+                <circle id="stabilityRingArc" cx="22" cy="22" r="18"
+                  stroke="#00D6FF" stroke-width="3.5" fill="none"
+                  stroke-linecap="round"
+                  stroke-dasharray="113.1" stroke-dashoffset="113.1"
+                  transform="rotate(-90 22 22)"
+                  style="transition: stroke-dashoffset 0.08s linear, stroke 0.2s"/>
+                <!-- Lock icon when stable -->
+                <text id="stabilityIcon" x="22" y="26" text-anchor="middle"
+                  font-size="11" fill="rgba(255,255,255,0.5)" font-family="sans-serif">✋</text>
+              </svg>
+              <span id="stabilityLabel" class="text-[9px] font-bold text-slate-400 tracking-widest">HOLD STILL</span>
+            </div>
           </div>
         </div>
 
@@ -755,6 +773,63 @@
       }
     });
 
+    // -------------------------------------------------------------------------
+    // STABILITY GATE STATE — Intent Detection Variables
+    // -------------------------------------------------------------------------
+    // Hand motion tolerance between frames (0–1 normalized coords).
+    // 0.018 accommodates slight natural tremor while catching intentional holds.
+    const STABILITY_THRESHOLD = 0.018;
+
+    // Consecutive stable frames before committing a sign (~0.5s at 30fps).
+    const STABILITY_FRAMES_REQUIRED = 15;
+
+    // Cooldown in ms after committing a sign before allowing another commit
+    const STABILITY_COOLDOWN_MS = 1400;
+
+    let stabilityCounter = 0;          // Consecutive stable frames so far
+    let lastLandmarkSnapshot = null;   // Previous frame's landmark list (flat)
+    let stabilityFired = false;        // Did we already fire for this stable hold?
+    let lastFireTime = 0;              // Timestamp of last sign commit (for cooldown)
+
+    const stabilityArc   = document.getElementById("stabilityRingArc");
+    const stabilityIcon  = document.getElementById("stabilityIcon");
+    const stabilityLabel = document.getElementById("stabilityLabel");
+    const RING_CIRCUMFERENCE = 113.1;  // 2π × 18 (SVG circle radius)
+
+    function updateStabilityRing(progress) {
+      // progress: 0.0 (empty) → 1.0 (full)
+      const offset = RING_CIRCUMFERENCE * (1 - progress);
+      stabilityArc.setAttribute("stroke-dashoffset", offset.toFixed(2));
+      if (progress >= 1.0) {
+        stabilityArc.setAttribute("stroke", "#00FF99");  // Green when locked
+        stabilityIcon.textContent = "🔒";
+        stabilityLabel.textContent = "LOCKED";
+        stabilityLabel.style.color = "#00FF99";
+      } else if (progress > 0.4) {
+        stabilityArc.setAttribute("stroke", "#00D6FF");  // Cyan while building
+        stabilityIcon.textContent = "✋";
+        stabilityLabel.textContent = "HOLD STILL";
+        stabilityLabel.style.color = "";
+      } else {
+        stabilityArc.setAttribute("stroke", "rgba(255,255,255,0.25)");
+        stabilityIcon.textContent = "✋";
+        stabilityLabel.textContent = "HOLD STILL";
+        stabilityLabel.style.color = "";
+      }
+    }
+
+    // Computes mean absolute displacement between two flat landmark arrays.
+    // Returns a number in normalized coords (0–1 range).
+    function computeMotion(prev, curr) {
+      if (!prev || prev.length !== curr.length) return 1.0;
+      let totalDelta = 0;
+      const n = curr.length;
+      for (let i = 0; i < n; i++) {
+        totalDelta += Math.abs(curr[i] - prev[i]);
+      }
+      return totalDelta / n;
+    }
+
     // Engine Mode Switcher (Alphabet Precision vs Unified 46 Signs)
     let currentMode = "alphabet";
     async function switchEngineMode(mode) {
@@ -795,6 +870,41 @@
       };
     }
     initWebSocket();
+    // Guarantee backend is synced to high-precision alphabet mode on load
+    switchEngineMode("alphabet");
+
+    // Tracks latest live prediction received from backend
+    let latestLivePrediction = { sign: "", confidence: 0 };
+
+    // Commits a confirmed sign to the sentence construction buffer
+    function commitCurrentSign(sign, confidence) {
+      const now = Date.now();
+      if (!sign || sign === "Waiting..." || sign === "Detecting...") return;
+      if (sign === lastCommittedSign && (now - lastCommitTime) < 1800) return;
+
+      accumulatedSentence.push(sign);
+      const text = accumulatedSentence.join(" ");
+      const display = document.getElementById("sentenceDisplay");
+      display.innerText = text;
+      lastCommittedSign = sign;
+      lastCommitTime = now;
+
+      // Visual pulse animation on sentence display
+      display.style.transition = "transform 0.15s ease, border-color 0.15s ease";
+      display.style.transform = "scale(1.02)";
+      display.style.borderColor = "#00FF99";
+      setTimeout(() => {
+        display.style.transform = "scale(1.0)";
+        display.style.borderColor = "";
+      }, 250);
+
+      // Auto-save sentence to SQLite
+      fetch(`${API_BASE}/api/history`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: currentUser.id, sentence: text, mode: currentMode, confidence })
+      }).then(() => loadHistory());
+    }
 
     function handlePrediction(data) {
       const { sign, confidence, telemetry } = data;
@@ -805,26 +915,13 @@
         document.getElementById("telemetryChip").innerText = telemetry.hardware;
       }
 
+      latestLivePrediction = { sign: sign || "", confidence: confidence || 0 };
+
+      // Update Live Inference UI continuously
       document.getElementById("activeSign").innerText = sign || "Detecting...";
       const confPercent = Math.round((confidence || 0) * 100);
       document.getElementById("confidenceBar").style.width = `${confPercent}%`;
       document.getElementById("confidenceText").innerText = `${confPercent}%`;
-
-      const now = Date.now();
-      if (confidence >= 0.55 && sign && sign !== "Waiting..." && sign !== lastCommittedSign && (now - lastCommitTime) > 1200) {
-        accumulatedSentence.push(sign);
-        const text = accumulatedSentence.join(" ");
-        document.getElementById("sentenceDisplay").innerText = text;
-        lastCommittedSign = sign;
-        lastCommitTime = now;
-
-        // Auto-save sentence to SQLite
-        fetch(`${API_BASE}/api/history`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: currentUser.id, sentence: text, mode: "live", confidence })
-        }).then(() => loadHistory());
-      }
     }
 
     // -------------------------------------------------------------------------
@@ -859,11 +956,14 @@
       const detectedCount = results.multiHandLandmarks ? results.multiHandLandmarks.length : 0;
 
       if (detectedCount > 0) {
-        document.getElementById("handStatus").innerText = `${detectedCount} Hand${detectedCount > 1 ? 's' : ''} Locked ✓`;
+        document.getElementById("handStatus").innerText = `${detectedCount} Hand${detectedCount > 1 ? 's' : ''} Detected`;
         document.getElementById("handStatus").className = detectedCount > 1 ? "text-emerald-400 font-bold" : "text-cyan-400 font-bold";
 
         // Full 126 coordinate vector: [63 Left Hand] + [63 Right Hand]
         const fullVector = new Array(126).fill(0.0);
+
+        // Flat snapshot of all visible landmark coords for motion comparison
+        const currentSnapshot = [];
 
         // Reset 3D hands
         for (let i = 0; i < 21; i++) {
@@ -878,47 +978,104 @@
             drawLandmarks(pipCtx, landmarks, { color: '#FFFFFF', lineWidth: 1, radius: 3 });
           }
 
-          // Use screen position (X coordinate of wrist) to determine Left vs Right Hand
-          // In mirrored view: user's physical left hand appears on the right side of video, etc.
-          const wristX = landmarks[0].x;
-          let isLeftHandSlot = false;
+          // Use screen position (X coordinate of wrist) to determine Left vs Right Hand.
+          // Training data was shot non-mirrored (person facing camera, third-person view).
+          // Browser webcam IS mirrored, so MediaPipe handedness labels are inverted.
+          // "Left" from MediaPipe in selfie = person's physical Right hand in reality.
+          // We un-invert here to match training data perspective.
+          let isRightHandSlot = false;
 
           if (results.multiHandedness && results.multiHandedness[hIdx]) {
-            // MediaPipe handedness is inverted in selfie/mirrored mode
-            isLeftHandSlot = (results.multiHandedness[hIdx].label === "Left");
+            // MediaPipe selfie mode inverts labels: "Right" label = physical Left hand
+            // We flip it to match training data which used physical hand identity
+            isRightHandSlot = (results.multiHandedness[hIdx].label === "Left");
           } else {
-            isLeftHandSlot = (wristX < 0.5);
+            // Fallback: in mirrored view, hand on left screen side = physical right hand
+            isRightHandSlot = (landmarks[0].x < 0.5);
           }
 
-          const target3D = isLeftHandSlot ? hand3D_Left : hand3D_Right;
-          const offsetStart = isLeftHandSlot ? 0 : 63;
-
-          // Natural separation in 3D scene based on actual hand positions
-          const spatialXOffset = isLeftHandSlot ? -0.85 : 0.85;
+          const target3D = isRightHandSlot ? hand3D_Right : hand3D_Left;
+          const offsetStart = isRightHandSlot ? 63 : 0;
+          const spatialXOffset = isRightHandSlot ? 0.85 : -0.85;
 
           landmarks.forEach((lm, idx) => {
-            // 3D positioning in Three.js
+            // 3D positioning in Three.js scene (keep mirrored for visual correctness)
             const x = (lm.x - 0.5) * -2.4 + spatialXOffset;
             const y = (0.5 - lm.y) * 2.4;
             const z = -lm.z * 2.2;
             target3D.joints[idx].position.set(x, y, z);
 
-            // Vector packing: [0..62] Left hand, [63..125] Right hand
-            fullVector[offsetStart + idx * 3] = lm.x;
+            // Pack into 126-D feature vector.
+            // Mirror x (1 - lm.x) to convert from selfie/mirrored webcam space
+            // to the non-mirrored coordinate space used in training data images.
+            const mirroredX = 1.0 - lm.x;
+            fullVector[offsetStart + idx * 3]     = mirroredX;
             fullVector[offsetStart + idx * 3 + 1] = lm.y;
             fullVector[offsetStart + idx * 3 + 2] = lm.z;
+
+            // Track raw x,y per landmark for motion detection (stability gate)
+            currentSnapshot.push(lm.x, lm.y);
           });
 
           updateHandBones(target3D);
         });
 
-        // Stream 126-D landmarks to backend WebSocket
+        // Continuous live streaming to backend WebSocket for real-time visual feedback
         if (socket && socket.readyState === WebSocket.OPEN) {
           socket.send(JSON.stringify({ landmarks: fullVector }));
         }
+
+        // ── STABILITY GATE: INTENT DETECTION ────────────────────────────────
+        // Compute displacement between frames to detect deliberate holds
+        const motion = computeMotion(lastLandmarkSnapshot, currentSnapshot);
+        lastLandmarkSnapshot = currentSnapshot;
+
+        const inCooldown = (Date.now() - lastFireTime) < STABILITY_COOLDOWN_MS;
+
+        if (motion < STABILITY_THRESHOLD && !inCooldown) {
+          // Hand is holding still — increment stability counter
+          stabilityCounter = Math.min(stabilityCounter + 1, STABILITY_FRAMES_REQUIRED);
+        } else {
+          // Hand moved or is in cooldown
+          if (motion >= STABILITY_THRESHOLD) {
+            stabilityFired = false; // Re-arm once user intentionally moves hand
+          }
+          stabilityCounter = Math.max(0, stabilityCounter - 2); // Smooth decay rather than sudden drop
+        }
+
+        // Update the visual stability ring
+        const progress = stabilityCounter / STABILITY_FRAMES_REQUIRED;
+        updateStabilityRing(progress);
+
+        // Commit sign when stability hold reaches 100% and sign is valid
+        if (stabilityCounter >= STABILITY_FRAMES_REQUIRED && !stabilityFired) {
+          if (
+            latestLivePrediction.confidence >= 0.45 &&
+            latestLivePrediction.sign &&
+            latestLivePrediction.sign !== "Waiting..." &&
+            latestLivePrediction.sign !== "Detecting..."
+          ) {
+            stabilityFired = true;
+            lastFireTime = Date.now();
+            commitCurrentSign(latestLivePrediction.sign, latestLivePrediction.confidence);
+          }
+        }
+        // ────────────────────────────────────────────────────────────────────
+
       } else {
+        // No hands — reset stability state and indicators
         document.getElementById("handStatus").innerText = "Searching Hands...";
         document.getElementById("handStatus").className = "text-amber-400";
+
+        stabilityCounter = 0;
+        stabilityFired = false;
+        lastLandmarkSnapshot = null;
+        updateStabilityRing(0);
+        latestLivePrediction = { sign: "", confidence: 0 };
+        document.getElementById("activeSign").innerText = "Waiting...";
+        document.getElementById("confidenceBar").style.width = "0%";
+        document.getElementById("confidenceText").innerText = "0%";
+
         for (let i = 0; i < 21; i++) {
           hand3D_Left.joints[i].position.set(0, -999, 0);
           hand3D_Right.joints[i].position.set(0, -999, 0);
