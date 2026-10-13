@@ -21,67 +21,55 @@ class ISLLandmarkExtractor:
 
     def __init__(
         self,
-        min_detection_confidence: float = 0.7,
-        min_tracking_confidence: float = 0.6,
+        min_detection_confidence: float = 0.4,
+        min_tracking_confidence: float = 0.4,
         include_pose: bool = False
     ):
         self.include_pose = include_pose
-        self.mp_holistic = mp.solutions.holistic
+        self.mp_hands = mp.solutions.hands
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_drawing_styles = mp.solutions.drawing_styles
 
-        self.holistic = self.mp_holistic.Holistic(
+        self.hands = self.mp_hands.Hands(
+            static_image_mode=True,
+            max_num_hands=2,
             min_detection_confidence=min_detection_confidence,
-            min_tracking_confidence=min_tracking_confidence,
-            model_complexity=1
+            min_tracking_confidence=min_tracking_confidence
         )
 
     def process_frame(self, frame_bgr: np.ndarray) -> Tuple[np.ndarray, any]:
         """
-        Processes a BGR video frame and extracts the landmark feature vector.
-        
-        Args:
-            frame_bgr: OpenCV image (H, W, 3) in BGR color space.
-            
-        Returns:
-            features: 1D numpy array of shape (126,) [or (198,) if pose included]
-            results: MediaPipe detection results object for rendering.
+        Processes a BGR video frame and extracts dual-hand landmark feature vector.
+        Matches frontend exactly:
+          Indices 0..62:  Left Hand (or first hand) (21 landmarks * 3 coords)
+          Indices 63..125: Right Hand (or second hand) (21 landmarks * 3 coords)
         """
-        # Convert BGR to RGB for MediaPipe
         frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
         frame_rgb.flags.writeable = False
-        results = self.holistic.process(frame_rgb)
+        results = self.hands.process(frame_rgb)
         frame_rgb.flags.writeable = True
 
-        # Extract Left Hand (21 landmarks * 3 coordinates)
-        if results.left_hand_landmarks:
-            lh = np.array(
-                [[lm.x, lm.y, lm.z] for lm in results.left_hand_landmarks.landmark]
-            ).flatten()
-        else:
-            lh = np.zeros(21 * 3, dtype=np.float32)
+        vec = np.zeros(126, dtype=np.float32)
 
-        # Extract Right Hand (21 landmarks * 3 coordinates)
-        if results.right_hand_landmarks:
-            rh = np.array(
-                [[lm.x, lm.y, lm.z] for lm in results.right_hand_landmarks.landmark]
-            ).flatten()
-        else:
-            rh = np.zeros(21 * 3, dtype=np.float32)
+        if results.multi_hand_landmarks:
+            for idx, hand_lms in enumerate(results.multi_hand_landmarks):
+                # Determine hand slot (left vs right)
+                is_right = False
+                if results.multi_handedness and idx < len(results.multi_handedness):
+                    label = results.multi_handedness[idx].classification[0].label
+                    is_right = (label == "Right")
+                else:
+                    is_right = (idx == 1)
 
-        if self.include_pose:
-            # Extract upper body pose (33 landmarks * 4: x, y, z, visibility) or first 24
-            if results.pose_landmarks:
-                pose = np.array(
-                    [[lm.x, lm.y, lm.z] for lm in results.pose_landmarks.landmark]
-                ).flatten()
-            else:
-                pose = np.zeros(33 * 3, dtype=np.float32)
-            features = np.concatenate([lh, rh, pose]).astype(np.float32)
-        else:
-            features = np.concatenate([lh, rh]).astype(np.float32)
+                offset = 63 if is_right else 0
 
-        return features, results
+                coords = []
+                for lm in hand_lms.landmark:
+                    coords.extend([lm.x, lm.y, lm.z])
+                
+                vec[offset : offset + 63] = np.array(coords[:63], dtype=np.float32)
+
+        return vec, results
 
     def draw_landmarks(self, frame_bgr: np.ndarray, results: any) -> np.ndarray:
         """
@@ -89,37 +77,19 @@ class ISLLandmarkExtractor:
         """
         output = frame_bgr.copy()
 
-        # Draw left hand connections
-        if results.left_hand_landmarks:
-            self.mp_drawing.draw_landmarks(
-                output,
-                results.left_hand_landmarks,
-                self.mp_holistic.HAND_CONNECTIONS,
-                self.mp_drawing_styles.get_default_hand_landmarks_style(),
-                self.mp_drawing_styles.get_default_hand_connections_style()
-            )
-
-        # Draw right hand connections
-        if results.right_hand_landmarks:
-            self.mp_drawing.draw_landmarks(
-                output,
-                results.right_hand_landmarks,
-                self.mp_holistic.HAND_CONNECTIONS,
-                self.mp_drawing_styles.get_default_hand_landmarks_style(),
-                self.mp_drawing_styles.get_default_hand_connections_style()
-            )
-
-        # Draw pose connections (upper body)
-        if results.pose_landmarks:
-            self.mp_drawing.draw_landmarks(
-                output,
-                results.pose_landmarks,
-                self.mp_holistic.POSE_CONNECTIONS,
-                landmark_drawing_spec=self.mp_drawing_styles.get_default_pose_landmarks_style()
-            )
+        if hasattr(results, 'multi_hand_landmarks') and results.multi_hand_landmarks:
+            for hand_landmarks in results.multi_hand_landmarks:
+                self.mp_drawing.draw_landmarks(
+                    output,
+                    hand_landmarks,
+                    self.mp_hands.HAND_CONNECTIONS,
+                    self.mp_drawing_styles.get_default_hand_landmarks_style(),
+                    self.mp_drawing_styles.get_default_hand_connections_style()
+                )
 
         return output
 
     def close(self):
         """Release MediaPipe resources."""
-        self.holistic.close()
+        if hasattr(self, 'hands') and self.hands:
+            self.hands.close()

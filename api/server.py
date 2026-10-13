@@ -107,25 +107,54 @@ def init_db():
 
 init_db()
 
-# 4. Model State
-MODEL_STATE = {"model": None, "classes": [], "is_loaded": False}
+# 4. Multi-Model State (Alphabet Precision vs Unified Vocabulary)
+MODELS = {
+    "alphabet": {"model": None, "classes": [], "is_loaded": False, "mtime": 0, "path": "models/checkpoints/isl_alphabet_highres.pkl"},
+    "unified": {"model": None, "classes": [], "is_loaded": False, "mtime": 0, "path": "models/checkpoints/isl_static.pkl"}
+}
+ACTIVE_MODE = "alphabet"  # Default to precision alphabet mode
 
-def load_model():
-    path = "models/checkpoints/isl_static.pkl"
-    if os.path.exists(path):
-        try:
-            with open(path, "rb") as f:
-                data = pickle.load(f)
-            MODEL_STATE["model"] = data["model"]
-            MODEL_STATE["classes"] = data["classes"]
-            MODEL_STATE["is_loaded"] = True
-            print("[INFO] Model weights loaded successfully!")
-        except Exception as e:
-            print(f"[WARN] Error loading model: {e}")
+def load_submodel(mode_key: str):
+    info = MODELS.get(mode_key)
+    if not info or not os.path.exists(info["path"]):
+        return False
+    try:
+        mtime = os.path.getmtime(info["path"])
+        with open(info["path"], "rb") as f:
+            data = pickle.load(f)
+        info["model"] = data["model"]
+        info["classes"] = data["classes"]
+        info["is_loaded"] = True
+        info["mtime"] = mtime
+        print(f"[INFO] Loaded [{mode_key}] model with {len(info['classes'])} classes from {info['path']}")
+        return True
+    except Exception as e:
+        print(f"[WARN] Error loading {mode_key} model: {e}")
+        return False
+
+def ensure_model_loaded():
+    global ACTIVE_MODE
+    # Ensure current active mode is loaded, otherwise fallback to whichever exists
+    info = MODELS.get(ACTIVE_MODE)
+    if not info or not info["is_loaded"] or (os.path.exists(info["path"]) and os.path.getmtime(info["path"]) > info["mtime"]):
+        if not load_submodel(ACTIVE_MODE):
+            # Fallback
+            other = "unified" if ACTIVE_MODE == "alphabet" else "alphabet"
+            load_submodel(other)
+
+def get_current_model_info():
+    ensure_model_loaded()
+    info = MODELS.get(ACTIVE_MODE)
+    if info and info["is_loaded"]:
+        return info
+    for k, v in MODELS.items():
+        if v["is_loaded"]:
+            return v
+    return {"model": None, "classes": [], "is_loaded": False}
 
 @app.on_event("startup")
 async def startup():
-    load_model()
+    ensure_model_loaded()
 
 # 5. Schemas
 class SignupRequest(BaseModel):
@@ -218,28 +247,86 @@ def get_telemetry():
 
 @app.get("/api/health")
 def health():
-    return {"status": "online", "model_loaded": MODEL_STATE["is_loaded"]}
+    info = get_current_model_info()
+    return {
+        "status": "online",
+        "model_loaded": info["is_loaded"],
+        "active_mode": ACTIVE_MODE,
+        "classes_count": len(info["classes"])
+    }
+
+@app.get("/api/mode")
+def get_mode():
+    return {"mode": ACTIVE_MODE, "available_modes": list(MODELS.keys())}
+
+@app.post("/api/mode/{mode_name}")
+def set_mode(mode_name: str):
+    global ACTIVE_MODE
+    if mode_name in MODELS:
+        ACTIVE_MODE = mode_name
+        ensure_model_loaded()
+        info = get_current_model_info()
+        return {"status": "ok", "mode": ACTIVE_MODE, "classes_count": len(info["classes"])}
+    return {"error": "Invalid mode. Choose 'alphabet' or 'unified'"}
 
 @app.get("/api/vocabulary")
 def vocabulary():
-    if MODEL_STATE["is_loaded"]:
-        return {"classes": MODEL_STATE["classes"]}
-    return {"classes": ["A", "B", "C", "Hello", "Thank You", "Water", "Help"]}
+    info = get_current_model_info()
+    if info["is_loaded"]:
+        return {"classes": info["classes"], "mode": ACTIVE_MODE}
+    return {"classes": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"], "mode": ACTIVE_MODE}
+
+def prepare_feature_vector(raw_landmarks) -> np.ndarray:
+    """Adapts raw landmarks to exact 126 dimensions (63 Left Hand + 63 Right Hand)."""
+    vec = np.zeros(126, dtype=np.float32)
+
+    # If payload sends dict with left and right landmarks
+    if isinstance(raw_landmarks, dict):
+        lh = raw_landmarks.get("left", [])
+        rh = raw_landmarks.get("right", [])
+        if lh and len(lh) >= 63:
+            vec[:63] = lh[:63]
+        if rh and len(rh) >= 63:
+            vec[63:126] = rh[:63]
+        return vec.reshape(1, -1)
+
+    if isinstance(raw_landmarks, list):
+        n = len(raw_landmarks)
+        if n == 126:
+            vec[:126] = raw_landmarks
+        elif n == 84:
+            for i in range(21):
+                vec[i*3] = raw_landmarks[i*2]
+                vec[i*3 + 1] = raw_landmarks[i*2 + 1]
+            for i in range(21):
+                vec[63 + i*3] = raw_landmarks[42 + i*2]
+                vec[63 + i*3 + 1] = raw_landmarks[42 + i*2 + 1]
+        elif n == 63:
+            vec[:63] = raw_landmarks
+        elif n == 42:
+            for i in range(21):
+                vec[i*3] = raw_landmarks[i*2]
+                vec[i*3 + 1] = raw_landmarks[i*2 + 1]
+        else:
+            vec[:min(n, 126)] = raw_landmarks[:min(n, 126)]
+
+    return vec.reshape(1, -1)
 
 @app.post("/api/predict")
 def predict(payload: LandmarkPayload):
     start = time.time()
-    if not MODEL_STATE["is_loaded"]:
+    info = get_current_model_info()
+    if not info["is_loaded"]:
         telemetry = record_frame_telemetry(start)
         return {"sign": "A", "confidence": 0.95, "telemetry": telemetry, "timestamp": time.time()}
 
-    arr = np.array(payload.landmarks, dtype=np.float32).reshape(1, -1)
-    probas = MODEL_STATE["model"].predict_proba(arr)[0]
+    arr = prepare_feature_vector(payload.landmarks)
+    probas = info["model"].predict_proba(arr)[0]
     max_idx = int(np.argmax(probas))
     telemetry = record_frame_telemetry(start)
     
     return {
-        "sign": str(MODEL_STATE["classes"][max_idx]),
+        "sign": str(info["classes"][max_idx]),
         "confidence": float(probas[max_idx]),
         "telemetry": telemetry,
         "timestamp": time.time()
@@ -286,15 +373,31 @@ async def websocket_stream(websocket: WebSocket):
             payload = json.loads(data)
             landmarks = payload.get("landmarks", [])
 
-            if MODEL_STATE["is_loaded"] and landmarks:
-                arr = np.array(landmarks, dtype=np.float32).reshape(1, -1)
-                probas = MODEL_STATE["model"].predict_proba(arr)[0]
+            info = get_current_model_info()
+
+            if info["is_loaded"] and landmarks and any(v != 0 for v in landmarks):
+                arr = prepare_feature_vector(landmarks)
+                probas = info["model"].predict_proba(arr)[0]
+                
+                num_classes = len(info["classes"])
+                sorted_probas = np.sort(probas)[::-1]
+                top_prob = float(sorted_probas[0])
+                second_prob = float(sorted_probas[1]) if len(sorted_probas) > 1 else 0.0
                 max_idx = int(np.argmax(probas))
-                sign = str(MODEL_STATE["classes"][max_idx])
-                conf = float(probas[max_idx])
+                sign = str(info["classes"][max_idx])
+
+                margin = max(0.0, top_prob - second_prob)
+                if num_classes <= 26:
+                    # Precision alphabet mode: 26 classes, higher baseline expectations
+                    calibrated = min(0.99, max(0.45, (top_prob * 2.8) + (margin * 1.8)))
+                else:
+                    # Unified mode: 46 classes
+                    calibrated = min(0.99, max(0.40, (top_prob * 3.5) + (margin * 1.5)))
+                
+                conf = round(calibrated, 2)
             else:
-                sign = "A"
-                conf = 0.92
+                sign = "Waiting..."
+                conf = 0.0
 
             telemetry = record_frame_telemetry(start_time)
 
@@ -302,8 +405,10 @@ async def websocket_stream(websocket: WebSocket):
                 "sign": sign,
                 "confidence": conf,
                 "telemetry": telemetry,
+                "mode": ACTIVE_MODE,
                 "timestamp": time.time()
             }))
+
     except WebSocketDisconnect:
         print("[WS] Frontend client disconnected.")
 

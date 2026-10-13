@@ -29,6 +29,7 @@ data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+data/Dataset/
 *.mp4
 *.avi
 *.mov

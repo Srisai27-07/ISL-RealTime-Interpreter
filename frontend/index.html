@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sony WH-1000XM6 | Silence, Perfected & Vaani-ISL Studio</title>
+  <title>Vaani-ISL | Real-Time Indian Sign Language Interpreter</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -13,6 +13,7 @@
   <!-- MediaPipe Hands & Camera Utils -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
 
   <!-- Typography: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -40,45 +41,51 @@
 
     /* Ultra-clean Luxury Glassmorphism */
     .glass-nav {
-      background: rgba(14, 18, 22, 0.72);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      background: rgba(14, 18, 22, 0.78);
+      backdrop-filter: blur(24px) saturate(190%);
+      -webkit-backdrop-filter: blur(24px) saturate(190%);
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .glass-card {
-      background: rgba(16, 21, 26, 0.78);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      background: rgba(16, 21, 26, 0.82);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7), 0 0 25px -5px rgba(0, 214, 255, 0.08);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 30px -5px rgba(0, 214, 255, 0.1);
     }
 
     /* Gradient Typography */
     .hero-title-gradient {
-      background: linear-gradient(180deg, #FFFFFF 20%, rgba(255, 255, 255, 0.85) 65%, #00D6FF 100%);
+      background: linear-gradient(180deg, #FFFFFF 15%, rgba(255, 255, 255, 0.9) 60%, #00D6FF 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
-    .sony-badge {
-      background: linear-gradient(135deg, rgba(0, 80, 255, 0.15) 0%, rgba(0, 214, 255, 0.15) 100%);
-      border: 1px solid rgba(0, 214, 255, 0.35);
+    .pill-badge {
+      background: linear-gradient(135deg, rgba(0, 80, 255, 0.2) 0%, rgba(0, 214, 255, 0.2) 100%);
+      border: 1px solid rgba(0, 214, 255, 0.4);
     }
 
     .cta-button {
       background: linear-gradient(135deg, #0050FF 0%, #00B4D8 100%);
-      box-shadow: 0 8px 24px -4px rgba(0, 80, 255, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+      box-shadow: 0 10px 28px -4px rgba(0, 80, 255, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.35);
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .cta-button:hover {
-      box-shadow: 0 12px 32px 0 rgba(0, 214, 255, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.5);
-      transform: translateY(-1px) scale(1.02);
+      box-shadow: 0 14px 36px 0 rgba(0, 214, 255, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+      transform: translateY(-2px) scale(1.02);
     }
 
     /* Ambient Radial Void Glow */
     .radial-void-bg {
       background: radial-gradient(circle at 50% 50%, #1a2228 0%, #14191d 60%, #0c0f12 100%);
+    }
+
+    /* Canvas sharp rendering */
+    #sequenceCanvas {
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
     }
 
     /* Custom Scrollbar */
@@ -96,19 +103,23 @@
   <nav id="appleNav" class="fixed top-0 left-0 w-full z-50 transition-all duration-500 px-6 sm:px-12 py-3 flex items-center justify-between text-xs tracking-wide opacity-0 -translate-y-2 pointer-events-none">
     <!-- Brand / Product Title -->
     <div class="flex items-center gap-3">
-      <span class="font-bold tracking-widest text-white text-sm">SONY</span>
+      <span class="font-extrabold tracking-widest text-white text-sm flex items-center gap-1.5">
+        <span>VAANI</span>
+        <span class="text-cyan-400">ISL</span>
+        <span class="text-base">🤟</span>
+      </span>
       <span class="h-3 w-px bg-white/20"></span>
-      <span class="text-white/80 font-medium tracking-tight">WH‑1000XM6</span>
+      <span class="text-white/80 font-medium tracking-tight text-[11px]">Real-Time Interpreter</span>
     </div>
 
     <!-- Center Nav Links -->
     <div class="hidden md:flex items-center gap-8 text-white/70 font-medium">
       <a href="#hero" class="hover:text-white transition-colors">Overview</a>
-      <a href="#engineering" class="hover:text-white transition-colors">Technology</a>
-      <a href="#noise-cancelling" class="hover:text-white transition-colors">Noise Cancelling</a>
-      <a href="#sound" class="hover:text-white transition-colors">Sound Engine</a>
+      <a href="#engineering" class="hover:text-white transition-colors">Spatial Vision</a>
+      <a href="#temporal" class="hover:text-white transition-colors">Temporal BiLSTM</a>
+      <a href="#accessibility" class="hover:text-white transition-colors">Accessibility</a>
       <a href="#dashboard" class="text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-1.5 transition-colors">
-        <span>AI Studio</span>
+        <span>Live Studio</span>
         <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
       </a>
     </div>
@@ -116,30 +127,30 @@
     <!-- Right Primary CTA -->
     <div class="flex items-center gap-3 pointer-events-auto">
       <button onclick="scrollToDashboard()" class="cta-button text-white font-semibold px-4 py-2 rounded-full text-xs flex items-center gap-2">
-        <span>Enter AI Studio</span>
+        <span>Launch Studio</span>
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
       </button>
     </div>
   </nav>
 
   <!-- ========================================================================= -->
-  <!-- 2. SCROLLYTELLING CONTAINER (450vh Pinned Experience)                     -->
+  <!-- 2. SCROLLYTELLING CONTAINER (480vh Pinned Experience)                     -->
   <!-- ========================================================================= -->
   <div id="scrollyContainer" class="relative w-full" style="height: 480vh;">
 
     <!-- STICKY FULLSCREEN CANVAS VIEWPORT -->
     <div class="sticky top-0 left-0 w-full h-screen overflow-hidden flex items-center justify-center">
       
-      <!-- HTML5 Canvas for 240-Frame Sequence Playback -->
+      <!-- High-DPI Retina HTML5 Canvas for 240-Frame Sequence Playback -->
       <canvas id="sequenceCanvas" class="w-full h-full object-contain pointer-events-none z-0"></canvas>
 
-      <!-- Soft Vignette Overlay to ensure 100% Invisible Edges -->
-      <div class="absolute inset-0 pointer-events-none z-10" style="background: radial-gradient(ellipse at center, transparent 40%, rgba(20,25,29,0.4) 75%, #14191d 100%);"></div>
+      <!-- Soft Edge Vignette Overlay for 100% Invisible Void Blending -->
+      <div class="absolute inset-0 pointer-events-none z-10" style="background: radial-gradient(ellipse at center, transparent 45%, rgba(20,25,29,0.35) 75%, #14191d 100%);"></div>
 
       <!-- Initial Preloader Banner -->
       <div id="preloader" class="absolute z-40 inset-0 flex flex-col items-center justify-center bg-[#14191d] transition-opacity duration-700">
-        <div class="w-8 h-8 rounded-full border-2 border-cyan-500/20 border-t-cyan-400 animate-spin mb-4"></div>
-        <p class="mono text-xs text-white/70 tracking-widest uppercase" id="loaderText">CALIBRATING ACOUSTIC ARCHITECTURE [ 0% ]</p>
+        <div class="w-9 h-9 rounded-full border-2 border-cyan-500/20 border-t-cyan-400 animate-spin mb-4"></div>
+        <p class="mono text-xs text-white/80 tracking-widest uppercase" id="loaderText">CALIBRATING SPATIAL RECOGNITION PIPELINE [ 0% ]</p>
       </div>
 
       <!-- ===================================================================== -->
@@ -148,99 +159,120 @@
       
       <!-- BEAT 1: HERO / INTRO (0% - 18%) -->
       <div id="beatHero" class="absolute z-20 inset-0 flex flex-col items-center justify-center text-center px-6 transition-all duration-700 pointer-events-none">
-        <div class="sony-badge px-3.5 py-1 rounded-full text-[11px] font-semibold text-cyan-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-          <span>FLAGSHIP NOISE CANCELLING</span>
+        <div class="pill-badge px-4 py-1.5 rounded-full text-[11px] font-semibold text-cyan-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+          <span>AI ACCESSIBILITY & SPATIAL COMPUTING</span>
         </div>
         <h1 class="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight hero-title-gradient mb-4">
-          Sony WH‑1000XM6
+          Vaani-ISL
         </h1>
-        <p class="text-xl sm:text-2xl text-white/80 font-normal max-w-xl mb-3">
-          Silence, perfected.
+        <p class="text-xl sm:text-3xl text-white/90 font-medium max-w-2xl mb-3 tracking-tight">
+          Bridging Silence. Speaking Hands.
         </p>
-        <p class="text-sm sm:text-base text-white/50 max-w-lg font-light leading-relaxed mb-8">
-          Flagship wireless architecture, re‑engineered for a world that never stops.
+        <p class="text-sm sm:text-base text-white/60 max-w-xl font-light leading-relaxed mb-6">
+          Real-time dual-hand Indian Sign Language interpretation, powered by 3D spatial landmarks and temporal neural intelligence.
         </p>
+        
+        <!-- Feature Tags -->
+        <div class="flex flex-wrap items-center justify-center gap-2 mb-8">
+          <span class="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-cyan-300 mono">#IndianSignLanguage</span>
+          <span class="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-slate-300 mono">#MediaPipe3D</span>
+          <span class="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-indigo-300 mono">#TemporalBiLSTM</span>
+          <span class="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-emerald-300 mono">&lt;15ms Latency</span>
+        </div>
+
         <div class="flex items-center gap-2 text-xs text-white/40 mono animate-bounce">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
-          <span>SCROLL TO EXPLORE ARCHITECTURE</span>
+          <span>SCROLL TO DECONSTRUCT ARCHITECTURE</span>
         </div>
       </div>
 
-      <!-- BEAT 2: ENGINEERING REVEAL (18% - 42%) -->
+      <!-- BEAT 2: SPATIAL HAND ARCHITECTURE (18% - 42%) -->
       <div id="beatEngineering" class="absolute z-20 inset-0 flex items-center justify-start px-8 sm:px-20 transition-all duration-700 opacity-0 pointer-events-none">
         <div class="glass-card max-w-md p-8 rounded-3xl text-left border border-white/10">
-          <div class="text-[11px] mono text-cyan-400 tracking-widest uppercase mb-2">01 / STRUCTURAL ACOUSTICS</div>
+          <div class="text-[11px] mono text-cyan-400 tracking-widest uppercase mb-2">01 / DUAL-HAND SPATIAL ARCHITECTURE</div>
           <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-4 leading-tight">
-            Precision-engineered for silence.
+            Precision-mapped for every nuance.
           </h2>
           <p class="text-sm text-white/70 font-normal leading-relaxed mb-4">
-            Custom low-distortion drivers, sealed acoustic chambers, and optimized airflow deliver studio-grade clarity across every frequency.
+            Unlike ASL, Indian Sign Language relies fundamentally on <b>two-handed grammar</b> and relative spatial trajectories. 
           </p>
-          <p class="text-xs text-white/50 font-light leading-relaxed">
-            Every component is mathematically balanced for weight, acoustic damping, and ergonomic comfort—hour after hour.
+          <p class="text-xs text-white/50 font-light leading-relaxed mb-4">
+            Our pipeline extracts <b>21 3D coordinates per hand (126 spatial features)</b>, making inference scale-invariant and resilient to lighting variations.
           </p>
-        </div>
-      </div>
-
-      <!-- BEAT 3: NOISE CANCELLING & MICROPHONES (42% - 68%) -->
-      <div id="beatNoise" class="absolute z-20 inset-0 flex items-center justify-end px-8 sm:px-20 transition-all duration-700 opacity-0 pointer-events-none">
-        <div class="glass-card max-w-md p-8 rounded-3xl text-left border border-cyan-500/20">
-          <div class="text-[11px] mono text-cyan-400 tracking-widest uppercase mb-2">02 / INTEGRATED INTELLIGENCE</div>
-          <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-4 leading-tight">
-            Adaptive noise cancelling, redefined.
-          </h2>
-          <div class="space-y-3 text-xs sm:text-sm text-white/70">
-            <div class="flex items-start gap-2.5">
-              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-1.5 shrink-0"></span>
-              <span><b>Multi-microphone array</b> listens in all 360 degrees in real time.</span>
-            </div>
-            <div class="flex items-start gap-2.5">
-              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-1.5 shrink-0"></span>
-              <span><b>Real-time acoustic analysis</b> adapts to cabin pressure and ambient environments.</span>
-            </div>
-            <div class="flex items-start gap-2.5">
-              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-1.5 shrink-0"></span>
-              <span>Your music stays pure—planes, crowds, and trains dissolve completely.</span>
-            </div>
+          <div class="flex gap-2">
+            <span class="px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-700/50 text-[10px] mono text-cyan-300">21 Joints / Hand</span>
+            <span class="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] mono text-white/60">126 Features Total</span>
           </div>
         </div>
       </div>
 
-      <!-- BEAT 4: SOUND & UPSCALING (68% - 88%) -->
+      <!-- BEAT 3: TEMPORAL SEQUENCE INTELLIGENCE (42% - 68%) -->
+      <div id="beatNoise" class="absolute z-20 inset-0 flex items-center justify-end px-8 sm:px-20 transition-all duration-700 opacity-0 pointer-events-none">
+        <div class="glass-card max-w-md p-8 rounded-3xl text-left border border-cyan-500/20">
+          <div class="text-[11px] mono text-cyan-400 tracking-widest uppercase mb-2">02 / TEMPORAL SEQUENCE INTELLIGENCE</div>
+          <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-4 leading-tight">
+            Capturing motion across time.
+          </h2>
+          <div class="space-y-3 text-xs sm:text-sm text-white/70 mb-4">
+            <div class="flex items-start gap-2.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-1.5 shrink-0"></span>
+              <span><b>Rolling 30-frame window</b> captures continuous dynamic gestures in 1-second chunks.</span>
+            </div>
+            <div class="flex items-start gap-2.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-1.5 shrink-0"></span>
+              <span><b>75% consensus debouncing</b> eliminates flickering transitions between resting hands and active signs.</span>
+            </div>
+            <div class="flex items-start gap-2.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-1.5 shrink-0"></span>
+              <span><b>Deep BiLSTM neural model</b> tracks trajectory velocity and hand crossovers.</span>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <span class="px-2 py-0.5 rounded bg-indigo-950/60 border border-indigo-700/50 text-[10px] mono text-indigo-300">Bi-Directional LSTM</span>
+            <span class="px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-700/50 text-[10px] mono text-emerald-300">Zero Flicker Filter</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- BEAT 4: MULTIMODAL SPEECH & ACCESSIBILITY (68% - 88%) -->
       <div id="beatSound" class="absolute z-20 inset-0 flex items-center justify-start px-8 sm:px-20 transition-all duration-700 opacity-0 pointer-events-none">
         <div class="glass-card max-w-md p-8 rounded-3xl text-left border border-white/10">
-          <div class="text-[11px] mono text-cyan-400 tracking-widest uppercase mb-2">03 / HI-RES AUDIO HERITAGE</div>
+          <div class="text-[11px] mono text-cyan-400 tracking-widest uppercase mb-2">03 / REAL-TIME VOICE SYNTHESIS</div>
           <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-4 leading-tight">
-            Immersive, lifelike sound.
+            From silent gestures to spoken voice.
           </h2>
           <p class="text-sm text-white/70 font-normal leading-relaxed mb-4">
-            High-performance composite drivers unlock unprecedented micro-detail, harmonic depth, and spacious soundstaging in every track.
+            Recognized signs are synthesized into natural speech via non-blocking audio engines without dropping camera frames.
           </p>
-          <p class="text-xs text-white/50 font-light leading-relaxed">
-            Edge-AI upscaling restores high-frequency texture to compressed files, rendering vocals with lifelike, breathy presence.
+          <p class="text-xs text-white/50 font-light leading-relaxed mb-4">
+            Integrated <b>local SQLite archiving</b> logs conversation history with timestamps for medical appointments, banking counters, and classrooms.
           </p>
+          <div class="flex gap-2">
+            <span class="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] mono text-white/70">Asynchronous TTS</span>
+            <span class="px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-700/50 text-[10px] mono text-cyan-300">SQLite Archiving</span>
+          </div>
         </div>
       </div>
 
       <!-- BEAT 5: REASSEMBLY & GRAND CTA (88% - 100%) -->
       <div id="beatReassembly" class="absolute z-20 inset-0 flex flex-col items-center justify-center text-center px-6 transition-all duration-700 opacity-0 pointer-events-none">
-        <div class="sony-badge px-3.5 py-1 rounded-full text-[11px] font-semibold text-cyan-400 uppercase tracking-widest mb-4">
-          REASSEMBLED PERFECTION
+        <div class="pill-badge px-4 py-1.5 rounded-full text-[11px] font-semibold text-cyan-400 uppercase tracking-widest mb-4">
+          EMPOWERING 18 MILLION VOICES
         </div>
         <h2 class="text-4xl sm:text-6xl font-black tracking-tight text-white mb-3">
-          Hear everything. Feel nothing else.
+          Sign. Speak. Connect.
         </h2>
         <p class="text-base sm:text-lg text-white/70 max-w-md mb-8">
-          WH‑1000XM6. Designed for focus, crafted for comfort.
+          Production-grade, low-latency, and engineered for accessible everyday communication.
         </p>
         
         <div class="flex flex-col sm:flex-row items-center gap-4 pointer-events-auto">
           <button onclick="scrollToDashboard()" class="cta-button text-white font-bold px-8 py-4 rounded-2xl text-sm flex items-center gap-3">
-            <span>ENTER VAANI-ISL INTERPRETER STUDIO</span>
+            <span>LAUNCH LIVE INTERPRETER STUDIO</span>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
           </button>
           <a href="#dashboard" class="text-white/60 hover:text-white text-xs font-semibold py-2 px-4 transition-colors">
-            See Full System Specs ↓
+            Explore System Telemetry ↓
           </a>
         </div>
       </div>
@@ -297,25 +329,37 @@
         </div>
 
         <!-- Camera PIP View (Top Right of Canvas) -->
-        <div class="absolute top-4 right-4 z-20 glass-card rounded-2xl overflow-hidden w-48 shadow-2xl border border-slate-700/80">
-          <div class="bg-slate-900/90 px-2.5 py-1 text-[10px] font-semibold text-slate-400 flex justify-between items-center">
-            <span>📷 CAMERA</span>
+        <div class="absolute top-4 right-4 z-20 glass-card rounded-2xl overflow-hidden w-60 shadow-2xl border border-slate-700/80">
+          <div class="bg-slate-900/90 px-3 py-1.5 text-[10px] font-semibold text-slate-400 flex justify-between items-center border-b border-slate-800">
+            <span>📷 DUAL CAMERA PIP</span>
             <span id="handStatus" class="text-amber-400">Searching...</span>
           </div>
           <div class="relative w-full aspect-video bg-black">
             <video id="webcam" class="w-full h-full object-cover transform -scale-x-100" playsinline autoplay muted></video>
+            <canvas id="pipCanvas" class="absolute inset-0 w-full h-full object-cover transform -scale-x-100 pointer-events-none"></canvas>
           </div>
         </div>
 
-        <!-- Three.js 3D Interactive Hand Canvas -->
+        <!-- Three.js 3D Interactive Hand Canvas with Ambient Holographic Grid -->
         <div id="canvas3d" class="flex-1 w-full h-full min-h-[460px] bg-gradient-to-b from-[#0F141C] to-[#0A0D10]"></div>
 
-        <!-- Bottom Overlay: Active Sign & Confidence Bar -->
-        <div class="p-4 bg-slate-900/80 border-t border-slate-800 flex items-center justify-between">
+        <!-- Bottom Overlay: Active Sign, Mode Switcher & Confidence Bar -->
+        <div class="p-4 bg-slate-900/80 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-4">
             <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Active Sign:</span>
             <span id="activeSign" class="text-2xl font-black text-cyan-400">Waiting...</span>
           </div>
+
+          <!-- Interactive Engine Mode Switcher -->
+          <div class="flex items-center bg-black/60 rounded-xl p-1 border border-slate-800 text-xs">
+            <button id="modeAlphabetBtn" onclick="switchEngineMode('alphabet')" class="px-3 py-1.5 rounded-lg font-bold text-cyan-300 bg-cyan-950/80 border border-cyan-700/60 transition-all flex items-center gap-1.5 shadow-sm">
+              <span>🔤 Alphabet (A-Z)</span>
+            </button>
+            <button id="modeUnifiedBtn" onclick="switchEngineMode('unified')" class="px-3 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-white transition-all flex items-center gap-1.5">
+              <span>🌐 All 46 Signs</span>
+            </button>
+          </div>
+
           <div class="flex items-center gap-3">
             <span class="text-xs text-slate-400">Confidence:</span>
             <div class="w-24 bg-slate-800 rounded-full h-2.5 overflow-hidden border border-slate-700">
@@ -354,9 +398,14 @@
 
         <!-- System Architecture & Judge Telemetry Card -->
         <div class="glass-card rounded-3xl p-6 flex-1 border border-slate-800 text-xs text-slate-300 space-y-3.5">
-          <h3 class="font-bold text-sm text-white flex items-center gap-2 border-b border-slate-800 pb-2">
-            <span>⚙️ System Architecture</span>
-          </h3>
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <h3 class="font-bold text-sm text-white flex items-center gap-2">
+              <span>⚙️ System Architecture</span>
+            </h3>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+              46 Active Signs
+            </span>
+          </div>
           <div class="space-y-2">
             <div class="flex justify-between">
               <span class="text-slate-400">Backend Gateway:</span>
@@ -364,11 +413,11 @@
             </div>
             <div class="flex justify-between">
               <span class="text-slate-400">Spatial Feature Dim:</span>
-              <span class="font-semibold text-cyan-400">126 Keypoints (2 Hands)</span>
+              <span class="font-semibold text-cyan-400">126 Keypoints (Dual Palm)</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-slate-400">Database Engine:</span>
-              <span class="font-semibold text-white">SQLite (Zero-Cloud Local)</span>
+              <span class="text-slate-400">Trained Vocabulary:</span>
+              <span class="font-semibold text-emerald-400">26 Alphabets + 20 Real Words</span>
             </div>
             <div class="flex justify-between">
               <span class="text-slate-400">Hardware Pipeline:</span>
@@ -376,8 +425,29 @@
             </div>
           </div>
 
-          <div class="p-3 rounded-xl bg-cyan-950/20 border border-cyan-800/40 text-[11px] text-cyan-200 leading-relaxed mt-4">
-            💡 <b>Hackathon Note:</b> Rotate the 3D hand using your mouse/trackpad to inspect skeletal joint angles in Three.js space.
+          <!-- Vocabulary Preview Badges -->
+          <div class="pt-2 border-t border-slate-800/80">
+            <div class="text-[10px] uppercase font-bold text-slate-400 mb-1.5 flex justify-between">
+              <span>Recognized Words</span>
+              <span class="text-cyan-400">46 Total</span>
+            </div>
+            <div class="flex flex-wrap gap-1 max-h-24 overflow-y-auto pr-1">
+              <span class="px-1.5 py-0.5 bg-slate-800/80 rounded text-[10px] text-slate-300">A–Z (ISL)</span>
+              <span class="px-1.5 py-0.5 bg-cyan-950/60 border border-cyan-700/50 rounded text-[10px] text-cyan-300">doctor</span>
+              <span class="px-1.5 py-0.5 bg-cyan-950/60 border border-cyan-700/50 rounded text-[10px] text-cyan-300">pain</span>
+              <span class="px-1.5 py-0.5 bg-cyan-950/60 border border-cyan-700/50 rounded text-[10px] text-cyan-300">assistance</span>
+              <span class="px-1.5 py-0.5 bg-cyan-950/60 border border-cyan-700/50 rounded text-[10px] text-cyan-300">college</span>
+              <span class="px-1.5 py-0.5 bg-cyan-950/60 border border-cyan-700/50 rounded text-[10px] text-cyan-300">work</span>
+              <span class="px-1.5 py-0.5 bg-cyan-950/60 border border-cyan-700/50 rounded text-[10px] text-cyan-300">today</span>
+              <span class="px-1.5 py-0.5 bg-cyan-950/60 border border-cyan-700/50 rounded text-[10px] text-cyan-300">pray</span>
+              <span class="px-1.5 py-0.5 bg-cyan-950/60 border border-cyan-700/50 rounded text-[10px] text-cyan-300">you</span>
+              <span class="px-1.5 py-0.5 bg-cyan-950/60 border border-cyan-700/50 rounded text-[10px] text-cyan-300">agree</span>
+              <span class="px-1.5 py-0.5 bg-cyan-950/60 border border-cyan-700/50 rounded text-[10px] text-cyan-300">afraid</span>
+              <span class="px-1.5 py-0.5 bg-cyan-950/60 border border-cyan-700/50 rounded text-[10px] text-cyan-300">bad</span>
+              <span class="px-1.5 py-0.5 bg-cyan-950/60 border border-cyan-700/50 rounded text-[10px] text-cyan-300">stand</span>
+              <span class="px-1.5 py-0.5 bg-cyan-950/60 border border-cyan-700/50 rounded text-[10px] text-cyan-300">become</span>
+              <span class="px-1.5 py-0.5 bg-cyan-950/60 border border-cyan-700/50 rounded text-[10px] text-cyan-300">warn</span>
+            </div>
           </div>
         </div>
 
@@ -403,7 +473,7 @@
   </section>
 
   <!-- ========================================================================= -->
-  <!-- 4. CORE ENGINE JAVASCRIPT: SCROLLYTELLING + THREE.JS + WEBSOCKETS         -->
+  <!-- 4. CORE ENGINE JAVASCRIPT: HIGH-DPI SCROLLYTELLING + THREE.JS + WEBSOCKETS -->
   <!-- ========================================================================= -->
   <script>
     const TOTAL_FRAMES = 240;
@@ -413,7 +483,7 @@
     const WS_URL = "ws://localhost:8000/ws/stream";
 
     // -------------------------------------------------------------------------
-    // PART A: 240-FRAME SCROLLYTELLING ENGINE
+    // PART A: HIGH-DPI RETINA SCROLLYTELLING ENGINE
     // -------------------------------------------------------------------------
     const canvas = document.getElementById("sequenceCanvas");
     const ctx = canvas.getContext("2d");
@@ -422,20 +492,25 @@
     let targetFrame = 1;
     let currentFrame = 1;
 
+    // High-DPI Retina Display Crispness Scaling
     function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const dpr = Math.max(window.devicePixelRatio || 1, 2); // Force sharp 2x Retina rendering
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
       renderCurrentFrame();
     }
     window.addEventListener("resize", resizeCanvas);
 
-    // Format frame index to 3 digits (e.g., 1 -> "001", 12 -> "012")
     function getFrameUrl(idx) {
       const padded = String(idx).padStart(3, '0');
       return `${FRAME_PREFIX}${padded}${FRAME_SUFFIX}`;
     }
 
-    // Preload image sequence with visual progress
     function preloadImages() {
       for (let i = 1; i <= TOTAL_FRAMES; i++) {
         const img = new Image();
@@ -443,7 +518,7 @@
         img.onload = () => {
           imagesLoaded++;
           const percent = Math.round((imagesLoaded / TOTAL_FRAMES) * 100);
-          document.getElementById("loaderText").innerText = `CALIBRATING ACOUSTIC ARCHITECTURE [ ${percent}% ]`;
+          document.getElementById("loaderText").innerText = `CALIBRATING SPATIAL RECOGNITION PIPELINE [ ${percent}% ]`;
 
           if (imagesLoaded === 1) {
             resizeCanvas();
@@ -463,23 +538,30 @@
     }
     preloadImages();
 
-    // Render frame to canvas with aspect-ratio contain & edge blending
+    // High-Resolution Crisp Canvas Renderer
     function renderFrame(img) {
       if (!img || !img.complete || img.naturalWidth === 0) return;
 
+      const dpr = Math.max(window.devicePixelRatio || 1, 2);
+      ctx.save();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = "#14191d";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      // High-DPI Scaling with Bicubic Interpolation
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+
       const hRatio = canvas.width / img.width;
       const vRatio = canvas.height / img.height;
-      const ratio = Math.min(hRatio, vRatio) * 0.92;
+      const ratio = Math.min(hRatio, vRatio) * 0.96;
 
       const centerShiftX = (canvas.width - img.width * ratio) / 2;
       const centerShiftY = (canvas.height - img.height * ratio) / 2;
 
       ctx.drawImage(img, 0, 0, img.width, img.height,
         centerShiftX, centerShiftY, img.width * ratio, img.height * ratio);
+      ctx.restore();
     }
 
     function renderCurrentFrame() {
@@ -489,16 +571,15 @@
       }
     }
 
-    // Smooth Lerp Rendering Loop for Buttery 60 FPS Scroll
+    // Smooth Lerp Loop (Buttery 60 FPS)
     function renderLoop() {
-      // Lerp currentFrame toward targetFrame
-      currentFrame += (targetFrame - currentFrame) * 0.14;
+      currentFrame += (targetFrame - currentFrame) * 0.16;
       renderCurrentFrame();
       requestAnimationFrame(renderLoop);
     }
     requestAnimationFrame(renderLoop);
 
-    // Scroll-Linked Progress and Storytelling Orchestration
+    // Scroll-Linked Narrative Progress
     const scrollyContainer = document.getElementById("scrollyContainer");
     const appleNav = document.getElementById("appleNav");
     const beatHero = document.getElementById("beatHero");
@@ -512,11 +593,10 @@
       const maxScroll = scrollyContainer.offsetHeight - window.innerHeight;
       const progress = Math.max(0, Math.min(1, scrollY / maxScroll));
 
-      // Calculate Target Frame (1 to 240)
       targetFrame = Math.max(1, Math.min(TOTAL_FRAMES, Math.floor(progress * (TOTAL_FRAMES - 1)) + 1));
 
-      // Apple Nav Fade-In Behavior
-      if (scrollY > 60) {
+      // Apple Nav Fade
+      if (scrollY > 50) {
         appleNav.classList.remove("opacity-0", "-translate-y-2", "pointer-events-none");
         appleNav.classList.add("opacity-100", "translate-y-0", "glass-nav");
       } else {
@@ -524,29 +604,22 @@
         appleNav.classList.remove("opacity-100", "translate-y-0", "glass-nav");
       }
 
-      // Storytelling Beats Transitions
-      // Beat 1: Hero (0 - 0.16)
+      // Story Beats
       if (progress < 0.16) {
         beatHero.style.opacity = (1 - (progress / 0.16) * 1.5);
-        beatHero.style.transform = `scale(${1 - progress * 0.3}) translateY(-${progress * 60}px)`;
+        beatHero.style.transform = `scale(${1 - progress * 0.25}) translateY(-${progress * 50}px)`;
       } else {
         beatHero.style.opacity = "0";
       }
 
-      // Beat 2: Engineering (0.18 - 0.42)
       setBeatState(beatEngineering, progress, 0.18, 0.42);
-
-      // Beat 3: Noise Cancelling (0.42 - 0.68)
       setBeatState(beatNoise, progress, 0.42, 0.68);
-
-      // Beat 4: Sound Engine (0.68 - 0.88)
       setBeatState(beatSound, progress, 0.68, 0.88);
 
-      // Beat 5: Reassembly & Grand CTA (0.88 - 1.0)
       if (progress >= 0.88) {
         const p5 = (progress - 0.88) / 0.12;
         beatReassembly.style.opacity = String(p5);
-        beatReassembly.style.transform = `translateY(${Math.max(0, (1 - p5) * 30)}px)`;
+        beatReassembly.style.transform = `translateY(${Math.max(0, (1 - p5) * 25)}px)`;
         beatReassembly.classList.remove("pointer-events-none");
       } else {
         beatReassembly.style.opacity = "0";
@@ -573,7 +646,7 @@
     }
 
     // -------------------------------------------------------------------------
-    // PART B: THREE.JS 3D INTERACTIVE SKELETAL HAND & STUDIO WEBSOCKET ENGINE
+    // PART B: HIGH-RESOLUTION THREE.JS 3D SKELETAL HAND & AMBIENT SCENE
     // -------------------------------------------------------------------------
     let socket;
     let accumulatedSentence = [];
@@ -584,40 +657,40 @@
     const canvas3dContainer = document.getElementById("canvas3d");
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, canvas3dContainer.clientWidth / canvas3dContainer.clientHeight, 0.1, 1000);
-    camera.position.set(0, 0, 4);
+    camera.position.set(0, 0, 3.8);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
     renderer.setSize(canvas3dContainer.clientWidth, canvas3dContainer.clientHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); // High-DPI 3D Rendering
     canvas3dContainer.appendChild(renderer.domElement);
 
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
 
-    // Lighting
-    scene.add(new THREE.AmbientLight(0xffffff, 0.9));
-    const pLight = new THREE.PointLight(0x00D6FF, 2.5, 50);
-    pLight.position.set(2, 3, 4);
-    scene.add(pLight);
-
-    // 21 Joint Spheres
-    const jointSpheres = [];
-    const jMaterial = new THREE.MeshStandardMaterial({
-      color: 0x00D6FF,
-      emissive: 0x0050FF,
-      roughness: 0.15,
-      metalness: 0.85
-    });
-    const jGeo = new THREE.SphereGeometry(0.045, 16, 16);
-
-    for (let i = 0; i < 21; i++) {
-      const sphere = new THREE.Mesh(jGeo, jMaterial);
-      sphere.position.set((Math.random() - 0.5) * 1.2, (Math.random() - 0.5) * 1.2, 0);
-      scene.add(sphere);
-      jointSpheres.push(sphere);
+    // Ambient Holographic Starfield Particles in Background
+    const starGeometry = new THREE.BufferGeometry();
+    const starCount = 300;
+    const starPositions = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount * 3; i++) {
+      starPositions[i] = (Math.random() - 0.5) * 8;
     }
+    starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+    const starMaterial = new THREE.PointsMaterial({ color: 0x00D6FF, size: 0.02, transparent: true, opacity: 0.4 });
+    const stars = new THREE.Points(starGeometry, starMaterial);
+    scene.add(stars);
 
-    // Skeletal Connections
+    // Dynamic Lighting
+    scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+    const pLight1 = new THREE.PointLight(0x00D6FF, 3.0, 50);
+    pLight1.position.set(2, 3, 4);
+    scene.add(pLight1);
+
+    const pLight2 = new THREE.PointLight(0x0050FF, 2.0, 50);
+    pLight2.position.set(-2, -2, 2);
+    scene.add(pLight2);
+
+    // MediaPipe Hand Bone Connections
     const HAND_CONNECTIONS = [
       [0,1],[1,2],[2,3],[3,4],
       [0,5],[5,6],[6,7],[7,8],
@@ -626,27 +699,49 @@
       [13,17],[17,18],[18,19],[19,20],[0,17]
     ];
 
-    const boneLines = [];
-    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x00D6FF, linewidth: 2, transparent: true, opacity: 0.7 });
+    // Create 3D Hand Mesh Generator (Left & Right Hands)
+    function create3DHand(colorHex, emissiveHex) {
+      const joints = [];
+      const bones = [];
+      const material = new THREE.MeshStandardMaterial({
+        color: colorHex,
+        emissive: emissiveHex,
+        emissiveIntensity: 0.6,
+        roughness: 0.1,
+        metalness: 0.9
+      });
+      const geo = new THREE.SphereGeometry(0.042, 24, 24);
 
-    HAND_CONNECTIONS.forEach(([i, j]) => {
-      const geo = new THREE.BufferGeometry().setFromPoints([
-        jointSpheres[i].position,
-        jointSpheres[j].position
-      ]);
-      const line = new THREE.Line(geo, lineMaterial);
-      scene.add(line);
-      boneLines.push({ line, i, j });
-    });
+      for (let i = 0; i < 21; i++) {
+        const sphere = new THREE.Mesh(geo, material);
+        sphere.position.set(0, -999, 0); // Hide until tracked
+        scene.add(sphere);
+        joints.push(sphere);
+      }
 
-    function update3DBones() {
-      boneLines.forEach(({ line, i, j }) => {
-        line.geometry.setFromPoints([jointSpheres[i].position, jointSpheres[j].position]);
+      const lineMaterial = new THREE.LineBasicMaterial({ color: colorHex, linewidth: 3, transparent: true, opacity: 0.8 });
+      HAND_CONNECTIONS.forEach(([i, j]) => {
+        const lineGeo = new THREE.BufferGeometry().setFromPoints([joints[i].position, joints[j].position]);
+        const line = new THREE.Line(lineGeo, lineMaterial);
+        scene.add(line);
+        bones.push({ line, i, j });
+      });
+
+      return { joints, bones };
+    }
+
+    const hand3D_Left = create3DHand(0x00D6FF, 0x0050FF);   // Cyan/Blue (Left Hand)
+    const hand3D_Right = create3DHand(0x38BDF8, 0x6366F1);  // Electric Sky (Right Hand)
+
+    function updateHandBones(hand3D) {
+      hand3D.bones.forEach(({ line, i, j }) => {
+        line.geometry.setFromPoints([hand3D.joints[i].position, hand3D.joints[j].position]);
       });
     }
 
     function animate3D() {
       requestAnimationFrame(animate3D);
+      stars.rotation.y += 0.0005;
       controls.update();
       renderer.render(scene, camera);
     }
@@ -659,6 +754,26 @@
         renderer.setSize(canvas3dContainer.clientWidth, canvas3dContainer.clientHeight);
       }
     });
+
+    // Engine Mode Switcher (Alphabet Precision vs Unified 46 Signs)
+    let currentMode = "alphabet";
+    async function switchEngineMode(mode) {
+      currentMode = mode;
+      const alphaBtn = document.getElementById("modeAlphabetBtn");
+      const unifiedBtn = document.getElementById("modeUnifiedBtn");
+      if (mode === "alphabet") {
+        alphaBtn.className = "px-3 py-1.5 rounded-lg font-bold text-cyan-300 bg-cyan-950/80 border border-cyan-700/60 transition-all flex items-center gap-1.5 shadow-sm";
+        unifiedBtn.className = "px-3 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-white transition-all flex items-center gap-1.5";
+      } else {
+        unifiedBtn.className = "px-3 py-1.5 rounded-lg font-bold text-cyan-300 bg-cyan-950/80 border border-cyan-700/60 transition-all flex items-center gap-1.5 shadow-sm";
+        alphaBtn.className = "px-3 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-white transition-all flex items-center gap-1.5";
+      }
+      try {
+        await fetch(`${API_BASE}/api/mode/${mode}`, { method: "POST" });
+      } catch (err) {
+        console.error("Mode switch error:", err);
+      }
+    }
 
     // -------------------------------------------------------------------------
     // PART C: WEBSOCKET GATEWAY & LIVE TELEMETRY
@@ -696,7 +811,7 @@
       document.getElementById("confidenceText").innerText = `${confPercent}%`;
 
       const now = Date.now();
-      if (confidence >= 0.80 && sign && sign !== lastCommittedSign && (now - lastCommitTime) > 1400) {
+      if (confidence >= 0.55 && sign && sign !== "Waiting..." && sign !== lastCommittedSign && (now - lastCommitTime) > 1200) {
         accumulatedSentence.push(sign);
         const text = accumulatedSentence.join(" ");
         document.getElementById("sentenceDisplay").innerText = text;
@@ -713,46 +828,106 @@
     }
 
     // -------------------------------------------------------------------------
-    // PART D: MEDIAPIPE WEBCAM TRACKING
+    // PART D: DUAL-HAND MEDIAPIPE WEBCAM TRACKING (2 HANDS)
     // -------------------------------------------------------------------------
     const videoElement = document.getElementById("webcam");
+    const pipCanvas = document.getElementById("pipCanvas");
+    const pipCtx = pipCanvas.getContext("2d");
+
     const hands = new Hands({
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
     });
 
+    // Lower confidence threshold slightly to reliably catch both hands
     hands.setOptions({
-      maxNumHands: 1,
+      maxNumHands: 2,
       modelComplexity: 1,
-      minDetectionConfidence: 0.6,
-      minTrackingConfidence: 0.6
+      minDetectionConfidence: 0.35,
+      minTrackingConfidence: 0.35
     });
 
     hands.onResults((results) => {
-      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-        document.getElementById("handStatus").innerText = "Locked ✓";
-        document.getElementById("handStatus").className = "text-emerald-400";
+      // Sync canvas dimensions with video
+      if (videoElement.videoWidth && pipCanvas.width !== videoElement.videoWidth) {
+        pipCanvas.width = videoElement.videoWidth;
+        pipCanvas.height = videoElement.videoHeight;
+      }
 
-        const landmarks = results.multiHandLandmarks[0];
-        const flatCoords = [];
+      // Clear PIP overlay
+      pipCtx.clearRect(0, 0, pipCanvas.width, pipCanvas.height);
 
-        landmarks.forEach((lm, idx) => {
-          const x = (lm.x - 0.5) * -2.4;
-          const y = (0.5 - lm.y) * 2.4;
-          const z = -lm.z * 2.2;
+      const detectedCount = results.multiHandLandmarks ? results.multiHandLandmarks.length : 0;
 
-          jointSpheres[idx].position.set(x, y, z);
-          flatCoords.push(lm.x, lm.y);
+      if (detectedCount > 0) {
+        document.getElementById("handStatus").innerText = `${detectedCount} Hand${detectedCount > 1 ? 's' : ''} Locked ✓`;
+        document.getElementById("handStatus").className = detectedCount > 1 ? "text-emerald-400 font-bold" : "text-cyan-400 font-bold";
+
+        // Full 126 coordinate vector: [63 Left Hand] + [63 Right Hand]
+        const fullVector = new Array(126).fill(0.0);
+
+        // Reset 3D hands
+        for (let i = 0; i < 21; i++) {
+          hand3D_Left.joints[i].position.set(0, -999, 0);
+          hand3D_Right.joints[i].position.set(0, -999, 0);
+        }
+
+        results.multiHandLandmarks.forEach((landmarks, hIdx) => {
+          // Draw 2D skeletal landmarks directly on the webcam PIP for visual feedback!
+          if (window.drawConnectors && window.drawLandmarks) {
+            drawConnectors(pipCtx, landmarks, HAND_CONNECTIONS, { color: hIdx === 0 ? '#00D6FF' : '#38BDF8', lineWidth: 3 });
+            drawLandmarks(pipCtx, landmarks, { color: '#FFFFFF', lineWidth: 1, radius: 3 });
+          }
+
+          // Use screen position (X coordinate of wrist) to determine Left vs Right Hand
+          // In mirrored view: user's physical left hand appears on the right side of video, etc.
+          const wristX = landmarks[0].x;
+          let isLeftHandSlot = false;
+
+          if (results.multiHandedness && results.multiHandedness[hIdx]) {
+            // MediaPipe handedness is inverted in selfie/mirrored mode
+            isLeftHandSlot = (results.multiHandedness[hIdx].label === "Left");
+          } else {
+            isLeftHandSlot = (wristX < 0.5);
+          }
+
+          const target3D = isLeftHandSlot ? hand3D_Left : hand3D_Right;
+          const offsetStart = isLeftHandSlot ? 0 : 63;
+
+          // Natural separation in 3D scene based on actual hand positions
+          const spatialXOffset = isLeftHandSlot ? -0.85 : 0.85;
+
+          landmarks.forEach((lm, idx) => {
+            // 3D positioning in Three.js
+            const x = (lm.x - 0.5) * -2.4 + spatialXOffset;
+            const y = (0.5 - lm.y) * 2.4;
+            const z = -lm.z * 2.2;
+            target3D.joints[idx].position.set(x, y, z);
+
+            // Vector packing: [0..62] Left hand, [63..125] Right hand
+            fullVector[offsetStart + idx * 3] = lm.x;
+            fullVector[offsetStart + idx * 3 + 1] = lm.y;
+            fullVector[offsetStart + idx * 3 + 2] = lm.z;
+          });
+
+          updateHandBones(target3D);
         });
-        update3DBones();
 
+        // Stream 126-D landmarks to backend WebSocket
         if (socket && socket.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({ landmarks: flatCoords }));
+          socket.send(JSON.stringify({ landmarks: fullVector }));
         }
       } else {
-        document.getElementById("handStatus").innerText = "Searching...";
+        document.getElementById("handStatus").innerText = "Searching Hands...";
         document.getElementById("handStatus").className = "text-amber-400";
+        for (let i = 0; i < 21; i++) {
+          hand3D_Left.joints[i].position.set(0, -999, 0);
+          hand3D_Right.joints[i].position.set(0, -999, 0);
+        }
+        updateHandBones(hand3D_Left);
+        updateHandBones(hand3D_Right);
       }
     });
+
 
     const cameraUtils = new Camera(videoElement, {
       onFrame: async () => {
