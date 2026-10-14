@@ -33,3 +33,7 @@ jobs:
       run: |
         python -c "import yaml; yaml.safe_load(open('configs/config.yaml'))"
         python -c "import json; json.load(open('data/class_labels.json'))"
+    - name: Validate TensorFlow preprocessing and acceptance state
+      run: |
+        pip install numpy pillow scipy
+        python -m pytest tests/test_tf_pipeline.py tests/test_tf_words.py -q

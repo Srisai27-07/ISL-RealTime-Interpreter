@@ -145,3 +145,20 @@ Check out the full 24-hour milestone breakdown in [WORKFLOW.md](WORKFLOW.md).
 
 ## 📜 License
 This project is licensed under the [MIT License](LICENSE).
+
+## TensorFlow alphabet workflow
+
+For the image-based A-Z classifier supporting one or two hands, use
+[the TensorFlow setup and training guide](docs/TENSORFLOW_ALPHABETS.md).
+It preserves the supplied data splits, audits duplicate leakage, and connects
+the saved Keras model to desktop and browser webcam input. The model files must
+be trained or downloaded separately. Dataset-split accuracy does not establish
+unseen-signer accuracy without signer metadata and a separate demonstration.
+
+## TensorFlow real-life words
+
+The supplied real-life word image dataset has a separate TensorFlow workflow.
+See [docs/TENSORFLOW_WORDS.md](docs/TENSORFLOW_WORDS.md) for user-disjoint splits,
+duplicate removal, training, limitations, and the `app/live_tf_words.py` webcam
+command. The word model is separate from the existing A–Z model.
+

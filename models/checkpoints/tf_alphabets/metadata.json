@@ -1,0 +1,148 @@
+{
+  "classes": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z"
+  ],
+  "feature_version": "spatial-hands-v1",
+  "feature_dim": 128,
+  "acceptance": {
+    "threshold": 0.8500000000000003,
+    "margin": 0.3,
+    "max_distance": 4.715177803039551,
+    "validation_target_met": true,
+    "validation_coverage": 0.8020338983050848,
+    "validation_accepted_accuracy": 0.9551986475063398
+  },
+  "allowed_hand_counts": {
+    "A": [
+      1,
+      2
+    ],
+    "B": [
+      1,
+      2
+    ],
+    "C": [
+      1,
+      2
+    ],
+    "D": [
+      1,
+      2
+    ],
+    "E": [
+      1,
+      2
+    ],
+    "F": [
+      1,
+      2
+    ],
+    "G": [
+      1,
+      2
+    ],
+    "H": [
+      1,
+      2
+    ],
+    "I": [
+      1
+    ],
+    "J": [
+      1,
+      2
+    ],
+    "K": [
+      1,
+      2
+    ],
+    "L": [
+      1,
+      2
+    ],
+    "M": [
+      1,
+      2
+    ],
+    "N": [
+      1,
+      2
+    ],
+    "O": [
+      1,
+      2
+    ],
+    "P": [
+      1,
+      2
+    ],
+    "Q": [
+      1,
+      2
+    ],
+    "R": [
+      1,
+      2
+    ],
+    "S": [
+      1,
+      2
+    ],
+    "T": [
+      1,
+      2
+    ],
+    "U": [
+      1
+    ],
+    "V": [
+      1
+    ],
+    "W": [
+      1,
+      2
+    ],
+    "X": [
+      1,
+      2
+    ],
+    "Y": [
+      1,
+      2
+    ],
+    "Z": [
+      1,
+      2
+    ]
+  },
+  "tensorflow_version": "2.21.0",
+  "selected_candidate": 1,
+  "scope": "Static A-Z, one or two hands, text output",
+  "mirroring": "No pixel mirroring before inference; mirrored preview only",
+  "signer_independent_test_verified": false
+}

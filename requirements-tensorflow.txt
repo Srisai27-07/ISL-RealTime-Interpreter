@@ -1,0 +1,9 @@
+# Dedicated alphabet environment. Legacy requirements.txt uses PyTorch.
+tensorflow>=2.16,<2.22
+mediapipe>=0.10.21,<1.2
+opencv-contrib-python>=4.8,<6
+numpy>=1.26,<3
+scipy>=1.11
+scikit-learn>=1.3
+pillow>=10
+pytest>=8

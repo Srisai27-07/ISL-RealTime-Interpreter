@@ -1,0 +1,57 @@
+{
+  "classes": [
+    "afraid",
+    "agree",
+    "assistance",
+    "bad",
+    "become",
+    "college",
+    "doctor",
+    "from",
+    "pain",
+    "pray",
+    "secondary",
+    "skin",
+    "small",
+    "specific",
+    "stand",
+    "today",
+    "warn",
+    "which",
+    "work",
+    "you"
+  ],
+  "feature_version": "rgb-square-and-spatial-hands-v2",
+  "input_size": 160,
+  "acceptance": {
+    "threshold": 0.9000000000000004,
+    "margin": 0.3,
+    "max_distance": 8.08739001274101,
+    "validation_target_met": true,
+    "validation_coverage": 0.48221343873517786,
+    "validation_accepted_accuracy": 0.9549180327868853
+  },
+  "selected_candidate": 0,
+  "scope": "Twenty supplied still-image word poses; one or two hands",
+  "training_method": "Frozen ImageNet MobileNetV2 image features plus optional spatial hand landmarks, trained TensorFlow fusion head",
+  "split_users": {
+    "Training": [
+      "User_1",
+      "User_2",
+      "User_3",
+      "User_6"
+    ],
+    "Validation": [
+      "User_4"
+    ],
+    "Testing": [
+      "User_5"
+    ]
+  },
+  "provider_user_disjoint_split": true,
+  "signer_independent_test_verified": false,
+  "motion_recognition_trained": false,
+  "no_hand_rejection_guaranteed": false,
+  "tensorflow_version": "2.21.0",
+  "mediapipe_version": "0.10.32"
+}

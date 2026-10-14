@@ -123,6 +123,15 @@ MODELS = {
     "unified": {"model": None, "classes": [], "is_loaded": False, "mtime": 0, "path": "models/checkpoints/isl_static.pkl"}
 }
 ACTIVE_MODE = "alphabet"  # Default to precision alphabet mode
+TF_ALPHABET = None
+TF_ALPHABET_PATH = "models/checkpoints/tf_alphabets"
+
+def load_tf_alphabet():
+    global TF_ALPHABET
+    if TF_ALPHABET is None and os.path.exists(f"{TF_ALPHABET_PATH}/alphabet.keras"):
+        from src.tensorflow_isl.classifier import AlphabetClassifier
+        TF_ALPHABET = AlphabetClassifier(TF_ALPHABET_PATH)
+    return TF_ALPHABET
 
 def load_submodel(mode_key: str):
     info = MODELS.get(mode_key)
@@ -143,7 +152,6 @@ def load_submodel(mode_key: str):
         return False
 
 def ensure_model_loaded():
-    global ACTIVE_MODE
     # Ensure current active mode is loaded, otherwise fallback to whichever exists
     info = MODELS.get(ACTIVE_MODE)
     if not info or not info["is_loaded"] or (os.path.exists(info["path"]) and os.path.getmtime(info["path"]) > info["mtime"]):
@@ -153,6 +161,9 @@ def ensure_model_loaded():
             load_submodel(other)
 
 def get_current_model_info():
+    if ACTIVE_MODE == "alphabet" and load_tf_alphabet() is not None:
+        return {"model": TF_ALPHABET, "classes": TF_ALPHABET.classes,
+                "is_loaded": True, "backend": "tensorflow"}
     ensure_model_loaded()
     info = MODELS.get(ACTIVE_MODE)
     if info and info["is_loaded"]:
@@ -178,6 +189,9 @@ class LoginRequest(BaseModel):
 
 class LandmarkPayload(BaseModel):
     landmarks: List[float]
+    hands: Optional[List[List[List[float]]]] = None
+    frame_width: int = 1
+    frame_height: int = 1
 
 class HistoryItem(BaseModel):
     user_id: int = 1
@@ -328,19 +342,46 @@ def predict(payload: LandmarkPayload):
     info = get_current_model_info()
     if not info["is_loaded"]:
         telemetry = record_frame_telemetry(start)
-        return {"sign": "A", "confidence": 0.95, "telemetry": telemetry, "timestamp": time.time()}
+        return {"sign": "Model not loaded", "confidence": 0.0, "accepted": False,
+                "telemetry": telemetry, "timestamp": time.time()}
+
+    if info.get("backend") == "tensorflow":
+        sign, confidence, reason = tf_prediction(payload.model_dump())
+        return {"sign": sign or "Not sure - please sign again", "confidence": confidence,
+                "accepted": sign is not None, "reason": reason,
+                "telemetry": record_frame_telemetry(start), "timestamp": time.time()}
 
     arr = prepare_feature_vector(payload.landmarks)
+    if not np.isfinite(arr).all() or not np.any(arr):
+        return {"sign": "Waiting...", "confidence": 0.0, "accepted": False,
+                "telemetry": record_frame_telemetry(start), "timestamp": time.time()}
     probas = info["model"].predict_proba(arr)[0]
     max_idx = int(np.argmax(probas))
     telemetry = record_frame_telemetry(start)
+    top = float(probas[max_idx])
+    second = float(np.sort(probas)[-2]) if len(probas)>1 else 0.0
+    accepted = top >= .8 and top-second >= .1
     
     return {
-        "sign": str(info["classes"][max_idx]),
-        "confidence": float(probas[max_idx]),
+        "sign": str(info["classes"][max_idx]) if accepted else "Not sure - please sign again",
+        "confidence": top,
+        "accepted": accepted,
         "telemetry": telemetry,
         "timestamp": time.time()
     }
+
+
+def tf_prediction(payload):
+    from src.tensorflow_isl.features import browser_features
+    # Require explicit unmirrored hand arrays, not the old mirrored landmark vector.
+    if payload.get("hands") is None:
+        return None, 0.0, "unmirrored_hands_required"
+    try:
+        feature = browser_features(payload["hands"], payload.get("frame_width", 1),
+                                   payload.get("frame_height", 1))
+        return load_tf_alphabet().predict(feature)
+    except (ValueError, TypeError):
+        return None, 0.0, "invalid_landmarks"
 
 # 8. History Endpoints
 @app.get("/api/history")
@@ -391,8 +432,12 @@ async def websocket_stream(websocket: WebSocket):
             landmarks = payload.get("landmarks", [])
 
             info = get_current_model_info()
-
-            if info["is_loaded"] and landmarks and any(v != 0 for v in landmarks):
+            accepted = False
+            if info.get("backend") == "tensorflow":
+                sign, conf, reason = tf_prediction(payload)
+                accepted = sign is not None
+                sign = sign or ("Waiting..." if reason == "no_hand" else "Not sure - please sign again")
+            elif info["is_loaded"] and landmarks and any(v != 0 for v in landmarks):
                 arr = prepare_feature_vector(landmarks)
                 probas = info["model"].predict_proba(arr)[0]
                 
@@ -403,15 +448,10 @@ async def websocket_stream(websocket: WebSocket):
                 max_idx = int(np.argmax(probas))
                 sign = str(info["classes"][max_idx])
 
-                margin = max(0.0, top_prob - second_prob)
-                if num_classes <= 26:
-                    # Precision alphabet mode: 26 classes, higher baseline expectations
-                    calibrated = min(0.99, max(0.45, (top_prob * 2.8) + (margin * 1.8)))
-                else:
-                    # Unified mode: 46 classes
-                    calibrated = min(0.99, max(0.40, (top_prob * 3.5) + (margin * 1.5)))
-                
-                conf = round(calibrated, 2)
+                conf = top_prob
+                accepted = conf >= .8 and top_prob-second_prob >= .1
+                if not accepted:
+                    sign = "Not sure - please sign again"
             else:
                 sign = "Waiting..."
                 conf = 0.0
@@ -421,6 +461,7 @@ async def websocket_stream(websocket: WebSocket):
             await websocket.send_text(json.dumps({
                 "sign": sign,
                 "confidence": conf,
+                "accepted": accepted,
                 "telemetry": telemetry,
                 "mode": ACTIVE_MODE,
                 "timestamp": time.time()

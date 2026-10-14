@@ -1064,13 +1064,17 @@
         document.getElementById("telemetryChip").innerText = telemetry.hardware;
       }
 
-      latestLivePrediction = { sign: sign || "", confidence: confidence || 0 };
+      latestLivePrediction = { sign: sign || "", confidence: confidence || 0, accepted: data.accepted === true };
+      if (!latestLivePrediction.accepted) {
+        stabilityCounter = 0;
+        stabilityFired = false;
+      }
 
       // Update Live Inference UI continuously
       document.getElementById("activeSign").innerText = sign || "Detecting...";
-      const confPercent = Math.round((confidence || 0) * 100);
+      const confPercent = data.accepted === true ? Math.round((confidence || 0) * 100) : 0;
       document.getElementById("confidenceBar").style.width = `${confPercent}%`;
-      document.getElementById("confidenceText").innerText = `${confPercent}%`;
+      document.getElementById("confidenceText").innerText = data.accepted === true ? `${confPercent}%` : "—";
     }
 
     // -------------------------------------------------------------------------
@@ -1171,7 +1175,12 @@
 
         // Continuous live streaming to backend WebSocket for real-time visual feedback
         if (socket && socket.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({ landmarks: fullVector }));
+          socket.send(JSON.stringify({
+            landmarks: fullVector,
+            hands: results.multiHandLandmarks.map(hand => hand.map(lm => [lm.x, lm.y, lm.z])),
+            frame_width: videoElement.videoWidth,
+            frame_height: videoElement.videoHeight
+          }));
         }
 
         // ── STABILITY GATE: INTENT DETECTION ────────────────────────────────
@@ -1199,7 +1208,7 @@
         // Commit sign when stability hold reaches 100% and sign is valid
         if (stabilityCounter >= STABILITY_FRAMES_REQUIRED && !stabilityFired) {
           if (
-            latestLivePrediction.confidence >= 0.45 &&
+            latestLivePrediction.accepted === true &&
             latestLivePrediction.sign &&
             latestLivePrediction.sign !== "Waiting..." &&
             latestLivePrediction.sign !== "Detecting..."

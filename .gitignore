@@ -30,6 +30,9 @@ data/raw/*
 data/processed/*
 !data/processed/.gitkeep
 data/Dataset/
+data/drive_alphabets/
+*.keras
+*.task
 *.mp4
 *.avi
 *.mov
@@ -62,3 +65,10 @@ wandb/
 build/
 dist/
 *.egg-info/
+.venv-*/
+data/history.db
+tensorflow_alphabets.patch
+
+data/drive_words/
+
+tensorflow_words.patch
